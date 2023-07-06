@@ -32,8 +32,8 @@ John Wang
 *Description of the contents of the repository
 Folders: 
 1. codes:This folder contains all the codes written in R (R version 4.0.5)
- 	1. clustering_functions_rann.R and clustering_functions_rann_lap.R: This file contains necessary functions for the data analysis. 
-	   This file should be sourced into the rest of the R files to call functions.
+ 	1. clustering_functions_rann.R and clustering_functions_rann_lap.R: This file contains necessary supporting functions for the data analysis. 
+	   These files are sourced into the rest of the R files to call the functions in them. There is no need to execute their codes independently.
 	2. bci.R and laplanada.R contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the 
    	   three forest dynamic plot datasets respectively. bci.R also contains the recruitment analysis across censuses and species trait analysis.
 
