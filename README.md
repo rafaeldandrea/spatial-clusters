@@ -32,19 +32,15 @@ John Wang
 *Description of the contents of the repository
 Folders: 
 1. codes:This folder contains all the codes written in R (R version 4.0.5)
- 	1. clustering_functions_rann.R: This file contains necessary functions for the data analysis. This file should be 
-           sourced into the rest of the R files to call functions.
-	2. bci.R, laplanada.R and yasuni.R contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the 
-   	   three forest dynamic plot datasets respectively. bci.R also contains the recruitment analysis across censuses.
+ 	1. clustering_functions_rann.R and clustering_functions_rann_lap.R: This file contains necessary functions for the data analysis. 
+	   This file should be sourced into the rest of the R files to call functions.
+	2. bci.R and laplanada.R contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the 
+   	   three forest dynamic plot datasets respectively. bci.R also contains the recruitment analysis across censuses and species trait analysis.
 
-2. Final datasets:This folder contains 3 sub-folders containing the raw census data (either openly accessible or with permission 
-		  from the PIs) and processed results for each of the forest dynamic plots.
+2. Final datasets:This folder contains 2 sub-folders containing the results of the clustering analysis and Kernel density estimation of 
+		 spatial clusters for BCI and La Planada plots.
 
-		1. Raw files: i) bci_raw.rds- BCI census data compiled from dryad data repository:https://datadryad.org/stash/dataset/doi:10.15146/5xcp-0d46
-			     ii) lap_census_data.rds- La Planada census data compiled from the repository:http://i2d.humboldt.org.co/ceiba/resource.do?r=planada_parcelapermanente_censo2&request_locale=ja
-			     iii)  yasuni.fulldata.txt- ____________________
-
-		2. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
+		1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
 		   sp: species code; 
 		   group:cluster to which the species belongs; 
 		   algorithm: Name of the alogorithm to calculate modularity of the clustering network;
@@ -53,7 +49,7 @@ Folders:
 		   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees
 		   seed: seed values used for randomization of the pairwise distance matrix for species. 0 indicates no
 			changes. 
-		3. Files named ___kde_full.rds shows the results of kernel density estimation of distinct spatial cluster of 
+		2. Files named ___kde_full.rds shows the results of kernel density estimation of distinct spatial cluster of 
 		   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
 		   census:(if there are multiple censuses) 
 		   d_cutoff (model parameter):Distance cutoff (in meters) used to identify the 'neighbor' trees
@@ -72,21 +68,6 @@ igraph (1.3.0)
 sparr(2.2-15)
 		   
 
-There are 3 R code files under the sub-folder "codes" which 
-contain the analyses for each of the forest dynamic plots. The file labelled
-"clustering_functions_rann.R" contains supporting functions. Please refer to 
-the annotations in the code files for further details on the analyses.
 
-All the data files are in the folder "Final datasets".
 
-Following are the raw input files for each of the FDPs:
-
-BCI:
-Census data:        "bci_raw.rds" 
-
-La Planada:
-Census data: "lap_census_data.rds"
-
-Yasuni:
-Census data: "yasuni.fulldata.txt"
 

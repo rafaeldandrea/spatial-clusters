@@ -72,87 +72,6 @@ randomize_adjacency_matrix = function(nvertices, nedges = 1, seed = 0) {
   return(graph.adjacency + t(graph.adjacency) + diag(nvertices))
 }
 
-read_bci = function(census){
-  
-  df = 
-    readRDS(
-      url(
-        'https://github.com/rafaeldandrea/Spatial-niche/blob/main/Data/bci_all_censuses.rds?raw=true'
-      )
-    )
-  
-  cen = census
-  
-  if(cen > 0){
-    
-    df %>%
-      filter(census == cen) %>%
-      select(-census) %>%
-      return
-    
-  } else{
-    
-    df %>%
-      select(-census) %>%
-      unique() %>%
-      return
-    
-  }
-  
-}
-
-read_laplanada = function(census){
-  
-  address = 
-    paste0(
-      '~/SpatialNiche/Data/relaplanadacensusdata/Censo ',
-      census,
-      '_La Planada.txt'
-    )
-  
-  lap = 
-    read.table(
-      address, 
-      header = TRUE
-    ) %>%
-    as_tibble %>%
-    select(sp, gx, dbh, gy)
-  
-}
-
-read_all_laplanada = function(){
-  address1 = 
-    paste0(
-      '~/SpatialNiche/Data/relaplanadacensusdata/Censo ',
-      1,
-      '_La Planada.txt'
-    )
-  address2 = 
-    paste0(
-      '~/SpatialNiche/Data/relaplanadacensusdata/Censo ',
-      2,
-      '_La Planada.txt'
-    )
-  lap1 = 
-    read.table(
-      address1, 
-      header = TRUE
-    ) %>%
-    as_tibble %>%
-    mutate(census = 1)
-  
-  lap2 = 
-    read.table(
-      address2, 
-      header = TRUE
-    ) %>%
-    as_tibble %>%
-    mutate(census = 2)
-  lap = rbind(lap1,lap2)%>%
-    select(sp, gx, gy, dbh, census) 
-  
-  
-}
 
 adjacency_matrix_parallelDist =
   function(
@@ -299,7 +218,7 @@ adjacency_matrix =
     Lx, 
     Ly,
     method = 'ann',
-    autolinked_species_only,
+    autolinked_species_only=FALSE,
     num_neighbors = 300
   ){
     ## int p(r) * dr from 0 to d*
@@ -315,7 +234,8 @@ adjacency_matrix =
       count(sp) %>%
       arrange(desc(n))
     
-
+    abundance_threshold = round(sqrt(1 / cumulative_null_prob_threshold))
+    
     dat_filtered = 
       dat %>%
       inner_join(abuns, by = 'sp') %>%
@@ -385,7 +305,7 @@ adjacency_matrix =
             distances =
               nn2(
                 with(df1,cbind(gx,gy)),
-                with(df2,cbind(gx ,gy)),
+                with(df2,cbind(gx,gy)),
                 k = min(n1, num_neighbors),
                 treetype = "kd",
                 searchtype = "radius",
