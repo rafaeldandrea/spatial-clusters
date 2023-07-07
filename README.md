@@ -47,15 +47,17 @@ John Wang
 Folders: 
 
 
-1. codes:This folder contains all the codes written in R (R version 4.0.5)
- 	1. *clustering_functions_rann.R* and *clustering_functions_rann_lap.R*: This file contains necessary supporting functions for the data analysis. 
-	   These files are sourced into the rest of the R files to call the functions in them. There is no need to execute their codes independently.
-	2. _bci.R_ and _laplanada.R_ contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the BCI and La Planada
+1. **codes**: This folder contains all the codes written in R (R version 4.0.5)
+ 	1. _bci.R_ and _laplanada.R_ run the data analysis (cluster analysis, soil nutrient analysis etc.) of the BCI and La Planada
    	   forest dynamic plot datasets, respectively. _bci.R_ also contains the recruitment analysis across censuses and species trait analysis.
-	3. _Validation_analysis.R_: This file contains the code required for the analysis of the validation of our method of quantifying niche differentiation. 
+
+        2. *clustering_functions_rann.R* and *clustering_functions_rann_lap.R*: These file contain necessary supporting functions for the data analysis. 
+	   These files are sourced into _bci.R_ and _laplanada.R_ to call the functions therein. There is no need to execute their codes independently.
+	
+        3. _Validation_analysis.R_: This file contains the code required for the analysis of the validation of our method of quantifying niche differentiation. 
 	   This file requires no external input and can be executed independently.
 
-2. Final datasets: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of 
+2. **Final datasets**: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of 
 		 spatial clusters for BCI and La Planada plots.
 
 		1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
