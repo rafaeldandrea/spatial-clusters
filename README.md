@@ -1,9 +1,11 @@
 # spatial-clusters
 Code and result files for "A spatial signal of niche differentiation in tropical forests"
 
+<br>
 
 *Citation for the code and data repository:
 
+<br>
 
 *Authors:
 
@@ -19,13 +21,15 @@ Rafael D'Andrea: rafael.dandrea@stonybrook.edu
 
 *Study summary
 
-Here, we aim to quantify the signatures of niche differentiation in tree species in three tropical forest dynamic plots.
-We demontrate a novel method that quantifies distict niches the strength of niche differentiation based on spatial 
-clustering tendancies between pairs of species. We also characterize these clusters of species in terms of their 
-association with soil nutrients. We show that there is strong spatial clustering of species across all three plots;
-further, these clusters are also strongly associated with the spatial distribution of soil nutrients, indicating 
+
+Here, we quantify the signatures of niche differentiation in tree species in tropical forest dynamic plots.
+We demontrate a novel method that quantifies the strength of niche differentiation based on spatial 
+clustering tendencies between pairs of species. We also characterize these species clusters in terms of their 
+association with soil nutrients. We find a strong spatial clustering of species;
+further, these clusters are strongly associated with the spatial distribution of soil nutrients, indicating 
 that the different groups correspond to different niche strategies for local soil conditions.
 
+<br>
 
 *Authors responsible for writing code
 
@@ -35,11 +39,16 @@ Mihir Umarani
 
 John Wang
 
+<br>
 
 *Description of the contents of the repository
+
+
 Folders: 
+
+
 1. codes:This folder contains all the codes written in R (R version 4.0.5)
- 	1. clustering_functions_rann.R and clustering_functions_rann_lap.R: This file contains necessary supporting functions for the data analysis. 
+ 	1. *clustering_functions_rann.R* and *clustering_functions_rann_lap.R*: This file contains necessary supporting functions for the data analysis. 
 	   These files are sourced into the rest of the R files to call the functions in them. There is no need to execute their codes independently.
 	2. bci.R and laplanada.R contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the 
    	   three forest dynamic plot datasets respectively. bci.R also contains the recruitment analysis across censuses and species trait analysis.
