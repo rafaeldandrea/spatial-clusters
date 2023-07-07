@@ -97,6 +97,8 @@ pcaMethods (1.82.0)
 caret (6.0-90)
 
 C50(0.1.6) 
+
+FactoClass (1.2.7)
 		   
 
 
