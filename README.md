@@ -76,12 +76,17 @@ Folders:
 		   soiltype: Cluster from the census 1 (reference cluster) corresponding to the group.
 		   fdp: Forest dynamic plot.
 
-			
+<br>
+
 Coding software and packages:
 All the code was executed in R, version (4.0.5).
-Essential packages used (versions)-
+
+Essential packages used (versions):
+
 RANN (2.6.1)
+
 igraph (1.3.0)
+
 sparr(2.2-15)
 		   
 
