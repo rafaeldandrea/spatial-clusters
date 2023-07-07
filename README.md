@@ -8,12 +8,17 @@ Code and result files for "A spatial signal of niche differentiation in tropical
 *Authors:
 
 Mihir Umarani:   mihir.umarani@gmail.com
+
 John Wang:       johnwang@g.harvard.edu
+
 James O'Dwyer:   jodwyer@illinois.edu
+
 Rafael D'Andrea: rafael.dandrea@stonybrook.edu
 
+<br>
 
 *Study summary
+
 Here, we aim to quantify the signatures of niche differentiation in tree species in three tropical forest dynamic plots.
 We demontrate a novel method that quantifies distict niches the strength of niche differentiation based on spatial 
 clustering tendancies between pairs of species. We also characterize these clusters of species in terms of their 
