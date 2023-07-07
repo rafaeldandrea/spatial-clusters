@@ -25,7 +25,9 @@ that the different groups correspond to different niche strategies for local soi
 *Authors responsible for writing code
 
 Rafael D'Andrea
+
 Mihir Umarani
+
 John Wang
 
 
