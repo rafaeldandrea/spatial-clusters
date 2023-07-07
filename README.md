@@ -91,6 +91,12 @@ RANN (2.6.1)
 igraph (1.5.0)
 
 sparr(2.2-15)
+
+pcaMethods (1.82.0)
+
+caret (6.0-90)
+
+C50(0.1.6) 
 		   
 
 
