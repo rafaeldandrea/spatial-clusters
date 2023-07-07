@@ -36,6 +36,8 @@ Folders:
 	   These files are sourced into the rest of the R files to call the functions in them. There is no need to execute their codes independently.
 	2. bci.R and laplanada.R contain the data analysis (cluster analysis, soil nutrient analysis etc.) of the 
    	   three forest dynamic plot datasets respectively. bci.R also contains the recruitment analysis across censuses and species trait analysis.
+	3. Validation_analysis.R: This file contains the code required for the analysis of the validation of our method of calculating niche differentiation. 
+	   This file contains only a theoretical exercise and required no external input. The code in this file can be
 
 2. Final datasets:This folder contains 2 sub-folders containing the results of the clustering analysis and Kernel density estimation of 
 		 spatial clusters for BCI and La Planada plots.
