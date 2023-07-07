@@ -88,7 +88,7 @@ Essential packages used (versions):
 
 RANN (2.6.1)
 
-igraph (1.3.0)
+igraph (1.5.0)
 
 sparr(2.2-15)
 		   
