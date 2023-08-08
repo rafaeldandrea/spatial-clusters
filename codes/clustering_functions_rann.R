@@ -3,7 +3,6 @@ library(igraph) ## to convert the adjacency matrix constructed from the pairs co
 ## a graph then find communities in the graph
 library(tidyverse)
 library(furrr)  ## for parallel computing
-library(parallel)  
 library(magrittr)
 library(RANN)  ## for neighbor-finding function nn2()
 library(sparr)

@@ -2,25 +2,22 @@ library(tidyverse)
 library(openxlsx)
 library(magrittr)
 library(furrr)
-library(parallel)
 library(readxl)
 library(parallelDist) ## for function parDist()
 library(igraph) ## to convert the adjacency matrix constructed from the pairs connected into 
 ## a graph then find communities in the graph
-library(tidyverse)
-library(furrr)  ## for parallel computing
-library(parallel)  
-library(magrittr)
 library(RANN)  ## for neighbor-finding function nn2()
 library(FactoClass)
 library(C50)
 library(caret)
+library(sparr) # for function bivariate.density() in KDE()
+library(pcaMethods)
+
 
 #Source important functions
-source('clustering_functions_rann.R')
+source('C:/Users/mihir/Documents/spatial-clusters/codes/clustering_functions_rann.R')
 
 #Plotting settings
-
 
 theme_set(theme_bw())
 theme_update(
@@ -34,14 +31,20 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 #Load census data
 ###############################################################################################################
 
-#Download the dryad repository doi:10.15146/5xcp-0d46
+#Download the dryad repository https://doi.org/10.15146/5xcp-0d46
 #Unzip the folder labelled "bci.tree.zip"
 
 raw.files=list.files()[intersect(grep(".rdata",list.files()),grep("bci.tree",list.files()))]
 
-mydat<- lapply(raw.files, function(x) {
-  load(file = x)
-  get(ls()[ls()!= "filename"])
+#Load .rdata files
+for(i in raw.files){
+  load(i)
+}
+
+tree.files=ls()[grep("bci.tree",ls())]
+
+mydat=lapply(tree.files,function(x){
+  get(x)
 })
 
 
@@ -52,7 +55,7 @@ bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
 #Load BCI plant trait data
 #Source for trait data: https://doi.org/10.6084/m9.figshare.c.3303654.v1
 #Source for leaf stoichiometry data: https://doi.org/10.25573/data.23463254
-#Convert the tab separated text files into csv files. 
+#Convert the tab separated text files into csv files labeled as 'bci_trait_data.rds' and 'bci_st_tr.csv', respectively.
 
 trait_data_raw = readRDS('bci_trait_data.rds')
 trait_data_st=read.csv('bci_st_tr.csv')%>%as_tibble()
@@ -376,7 +379,6 @@ bci_clustmap_7=readRDS('bci_kde_full.rds')%>%
 # finding an individual tree within its own spatial niche. 
 ##################################################################################################################
 
-library(sparr) # for function bivariate.density() in KDE()
 filter = dplyr::filter
 
 cores = detectCores() 

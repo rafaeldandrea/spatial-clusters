@@ -49,7 +49,7 @@ Folders:
 
 1. **codes**: This folder contains all the codes written in R (R version 4.0.5)
    
- 	1.1. _bci.R_ and _laplanada.R_ run the data analysis (cluster analysis, soil nutrient analysis etc.) of the BCI and La Planada
+ 	1.1. bci.R_ and laplanada.R_ run the data analysis (cluster analysis, soil nutrient analysis etc.) of the BCI and La Planada
    	   forest dynamic plot datasets, respectively. _bci.R_ also contains the recruitment analysis across censuses and species trait analysis.
    
    	1.2. *clustering_functions_rann.R* and *clustering_functions_rann_lap.R*: These file contain necessary supporting functions for the data analysis. 
@@ -62,11 +62,11 @@ Folders:
    
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
 	   sp: Species code
-	   group: Cluster to which the species belongs 
-	   algorithm: Name of the alogorithm to calculate modularity of the clustering network
-	   weighted: Whether the edges in the network were weighted
-	   number_of_groups: Total number of distinct clusters found
-	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees
+	   group: Cluster (estimated through the algorithm) to which the species belongs. 
+	   algorithm: Name of the alogorithm to calculate modularity of the clustering network.
+	   weighted: (Yes/No) Whether the edges in the network were weighted.
+	   number_of_groups: Total number of distinct clusters found.
+	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees.
 	   seed: seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.
    
 	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
@@ -82,25 +82,47 @@ Folders:
 <br>
 
 Coding software and packages:
-All the code was executed in R, version (4.0.5).
+All the code was executed in R, version (4.3.1).
 
 Essential packages used (versions):
-
+tidyverse(2.0.0)
+openxlsx(4.2.5.2)
+magrittr(2.0.3)
+furrr(0.3.1)
+readxl(1.4.3)
+parallelDist(0.2.6)
+igraph (1.5.0.1)
 RANN (2.6.1)
-
-igraph (1.5.0)
-
-sparr(2.2-15)
-
-pcaMethods (1.82.0)
-
-caret (6.0-90)
-
-C50(0.1.6) 
-
 FactoClass (1.2.7)
+C50(0.1.8)
+caret (6.0-94)
+sparr(2.3-10)
+
+pcaMethods(1.92.0)
+Use the following code to install:
+
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("pcaMethods")
 		   
 
+RandomFields (3.3.14)
+This package will need to be installed from CRAN archive.
 
+Step 1. Install the two dependencies first: 
+	a)RandomFieldsUtils (version 1.2.5)
+	This will need to be installed from the archive source as well:
+	Use this code: 
 
+	require("devtools")
+	urls="https://cran.r-project.org/src/contrib/Archive/RandomFieldsUtils/RandomFieldsUtils_1.2.5.tar.gz"
+	install.packages(urls,repos=NULL,type='source')
 
+	b) sp
+	install.packages("sp")
+
+Step 2:Install the RandomFields package from CRAN archive
+	
+	require("devtools")
+	urls="https://cran.r-project.org/src/contrib/Archive/RandomFieldsUtils/RandomFieldsUtils_1.2.5.tar.gz"
+	install.packages(urls,repos=NULL,type='source')
