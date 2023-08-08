@@ -46,7 +46,7 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 
 df=read.table('occurrence.txt',sep='\t',header=TRUE)
 
-df1=df%>%select(id,recordNumber,"verbatimLatitude","verbatimLongitude","scientificNameID")%>%inner_join(trdat1)
+df1=df%>%select(id,recordNumber,"verbatimLatitude","verbatimLongitude","scientificNameID")
 
 trdat=read.table('measurementorfact.txt',sep='\t',header=TRUE)
 
@@ -64,9 +64,6 @@ lap=df1%>%
     "sp"=scientificNameID,
     "dbh"=DAP)%>%as_tibble()
 
-#OR
-  
-lap=readRDS("lap_census_data.rds")%>%as_tibble()
 
 #Soil nutrient data
 #Source:https://doi.org/10.13012/B2IDB-6140727_V1 
