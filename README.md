@@ -62,7 +62,9 @@ Folders:
    
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
 	   sp: Species code
-	   group: Cluster (estimated through the algorithm) to which the species belongs. 
+   
+	   group: Cluster (estimated through the algorithm) to which the species belongs.
+    
 	   algorithm: Name of the alogorithm to calculate modularity of the clustering network.
 	   weighted: (Yes/No) Whether the edges in the network were weighted.
 	   number_of_groups: Total number of distinct clusters found.
