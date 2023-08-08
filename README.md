@@ -61,10 +61,9 @@ Folders:
 2. **Final datasets**: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of spatial clusters for BCI and La Planada plots.
    
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
-	   sp: Species code
-   
-	   group: Cluster (estimated through the algorithm) to which the species belongs.
-    
+
+           sp: Species code   
+	   group: Cluster (estimated through the algorithm) to which the species belongs.    
 	   algorithm: Name of the alogorithm to calculate modularity of the clustering network.
 	   weighted: (Yes/No) Whether the edges in the network were weighted.
 	   number_of_groups: Total number of distinct clusters found.
@@ -73,6 +72,7 @@ Folders:
    
 	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
 	   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
+   
 	   census: (if there are multiple censuses) 
 	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees
 	   group: Cluster group inferred from the clustering analysis
