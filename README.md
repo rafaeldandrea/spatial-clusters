@@ -58,28 +58,30 @@ Folders:
 	1.3. _Validation_analysis.R_: This file contains the code required for the analysis of the validation of our method of quantifying niche differentiation. 
 	   This file requires no external input and can be executed independently.
 
-2. **Final datasets**: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of spatial clusters for BCI and La Planada plots.
+2. **Final datasets**: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of spatial clusters for BCI and La Planada plots. (See main text for further explanation of parameters in the analysis)
    
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
-
+   
+<br>
            sp: Species code   
 	   group: Cluster (estimated through the algorithm) to which the species belongs.    
-	   algorithm: Name of the alogorithm to calculate modularity of the clustering network.
-	   weighted: (Yes/No) Whether the edges in the network were weighted.
+	   algorithm: Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).
+	   weighted: (Yes/No) Whether the edges in the network were weighted (only Yes was used).
 	   number_of_groups: Total number of distinct clusters found.
 	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees.
 	   seed: seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.
    
 	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
 	   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
-   
+
+   <br>
 	   census: (if there are multiple censuses) 
 	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees
 	   group: Cluster group inferred from the clustering analysis
-	   x and y: x and y coordinates of a cell (10m X 10m)
-	   density: Estimated density of the individuals from a given species cluster from the kernel density estimation.
-	   soiltype: Cluster from the census 1 (reference cluster) corresponding to the group.
-	   fdp: Forest dynamic plot.
+	   x and y: x and y coordinates of a cell (cell size is 20m X 20m. E.g. the bottom-left corner of a cell with x = 4, y = 3 is 80m east and 60m north of the origin, placed at the bottom-left corner of the plot.)
+	   density: Estimated density of the individuals from a given species cluster from the kernel density estimation (unit is proportional to individuals per cell, standardized such that ).
+	   soiltype: For each cell, cluster from census 1 (the reference census) with highest density in the cell relative to the other clusters, i.e. the most dominant cluster in that cell. Represents an inference that the cell contains the soil type preferred by species in that cluster.
+	   fdp: Forest dynamic plot (BCI or La Planada).
 
 <br>
 
@@ -107,6 +109,7 @@ if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 BiocManager::install("pcaMethods")
 		   
+Note: this may take a few minutes. You may be prompted to update dependency packages.
 
 RandomFields (3.3.14)
 This package will need to be installed from CRAN archive.
