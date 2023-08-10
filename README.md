@@ -70,8 +70,8 @@ Folders:
 	   number_of_groups:  Total number of distinct clusters found.<br>
 	   d_cutoff (model parameter):  Distance cutoff (in meters) used to identify the 'neighbor' trees.<br>
 	   seed:  seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.<br>
-   
-	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
+    
+    	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
 	   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
 
    <br>
