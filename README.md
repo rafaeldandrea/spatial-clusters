@@ -63,24 +63,24 @@ Folders:
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
    
 <br>
-           sp: Species code   
-	   group: Cluster (estimated through the algorithm) to which the species belongs.    
-	   algorithm: Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).
-	   weighted: (Yes/No) Whether the edges in the network were weighted (only Yes was used).
-	   number_of_groups: Total number of distinct clusters found.
-	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees.
-	   seed: seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.
+           sp:  Species code <br>  
+	   group:  Cluster (estimated through the algorithm) to which the species belongs. <br>   
+	   algorithm:  Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).<br>
+	   weighted:  (Yes/No) Whether the edges in the network were weighted (only Yes was used).<br>
+	   number_of_groups:  Total number of distinct clusters found.<br>
+	   d_cutoff (model parameter):  Distance cutoff (in meters) used to identify the 'neighbor' trees.<br>
+	   seed:  seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.<br>
    
 	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
 	   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
 
    <br>
-	   census: (if there are multiple censuses) 
-	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees
-	   group: Cluster group inferred from the clustering analysis
-	   x and y: x and y coordinates of a cell (cell size is 20m X 20m. E.g. the bottom-left corner of a cell with x = 4, y = 3 is 80m east and 60m north of the origin, placed at the bottom-left corner of the plot.)
-	   density: Estimated density of the individuals from a given species cluster from the kernel density estimation (unit is proportional to individuals per cell, standardized such that ).
-	   soiltype: For each cell, cluster from census 1 (the reference census) with highest density in the cell relative to the other clusters, i.e. the most dominant cluster in that cell. Represents an inference that the cell contains the soil type preferred by species in that cluster.
+	   census: (if there are multiple censuses) <br>
+	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees <br>
+	   group: Cluster group inferred from the clustering analysis <br>
+	   x and y: x and y coordinates of a cell (cell size is 20m X 20m. E.g. the bottom-left corner of a cell with x = 4, y = 3 is 80m east and 60m north of the origin, placed at the bottom-left corner of the plot.) <br>
+	   density: Estimated density of the individuals from a given species cluster from the kernel density estimation (unit is proportional to individuals per cell, standardized such that ). <br>
+	   soiltype: For each cell, cluster from census 1 (the reference census) with highest density in the cell relative to the other clusters, i.e. the most dominant cluster in that cell. Represents an inference that the cell contains the soil type preferred by species in that cluster. <br>
 	   fdp: Forest dynamic plot (BCI or La Planada).
 
 <br>
