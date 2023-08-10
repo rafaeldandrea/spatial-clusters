@@ -101,6 +101,7 @@ FactoClass (1.2.7)
 C50(0.1.8)
 caret (6.0-94)
 sparr(2.3-10)
+rcompanion(2.4_30)
 
 pcaMethods(1.92.0)
 Use the following code to install:
