@@ -12,6 +12,7 @@ library(C50)
 library(caret)
 library(sparr) # for function bivariate.density() in KDE()
 library(pcaMethods)
+library(rcompanion)
 
 filter = dplyr::filter
 
