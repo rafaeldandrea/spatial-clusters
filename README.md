@@ -76,32 +76,39 @@ Folders:
 
    <br>
 	   census: (if there are multiple censuses) <br>
+    
 	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees <br>
+    
 	   group: Cluster group inferred from the clustering analysis <br>
+    
 	   x and y: x and y coordinates of a cell (cell size is 20m X 20m. E.g. the bottom-left corner of a cell with x = 4, y = 3 is 80m east and 60m north of the origin, placed at the bottom-left corner of the plot.) <br>
+    
 	   density: Estimated density of the individuals from a given species cluster from the kernel density estimation (unit is proportional to individuals per cell, standardized such that ). <br>
+    
 	   soiltype: For each cell, cluster from census 1 (the reference census) with highest density in the cell relative to the other clusters, i.e. the most dominant cluster in that cell. Represents an inference that the cell contains the soil type preferred by species in that cluster. <br>
-	   fdp: Forest dynamic plot (BCI or La Planada).
+    
+	   fdp: Forest dynamic plot (BCI or La Planada). <br>
 
 <br>
 
-Coding software and packages:
+Coding software and packages:<br>
 All the code was executed in R, version (4.3.1).
 
-Essential packages used (versions):
-tidyverse(2.0.0)
-openxlsx(4.2.5.2)
-magrittr(2.0.3)
-furrr(0.3.1)
-readxl(1.4.3)
-parallelDist(0.2.6)
-igraph (1.5.0.1)
-RANN (2.6.1)
-FactoClass (1.2.7)
-C50(0.1.8)
-caret (6.0-94)
-sparr(2.3-10)
-rcompanion(2.4_30)
+Essential packages used (versions):<br>
+tidyverse(2.0.0)<br>
+openxlsx(4.2.5.2)<br>
+magrittr(2.0.3)<br>
+furrr(0.3.1)<br>
+readxl(1.4.3)<br>
+parallelDist(0.2.6)<br>
+igraph (1.5.0.1)<br>
+RANN (2.6.1)<br>
+FactoClass (1.2.7)<br>
+C50(0.1.8)<br>
+caret (6.0-94)<br>
+sparr(2.3-10)<br>
+spatstat(3.0_6) <br>
+rcompanion(2.4_30)<br>
 
 pcaMethods(1.92.0)
 Use the following code to install:
