@@ -60,9 +60,7 @@ Folders:
 
 2. **Final datasets**: This folder contains 2 sub-folders containing the results of the clustering analysis and kernel density estimation of spatial clusters for BCI and La Planada plots. (See main text for further explanation of parameters in the analysis)
    
-	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
-   
-<br>
+	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns: <br>
            sp:  Species code <br>  
 	   group:  Cluster (estimated through the algorithm) to which the species belongs. <br>   
 	   algorithm:  Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).<br>
@@ -71,9 +69,7 @@ Folders:
 	   d_cutoff (model parameter):  Distance cutoff (in meters) used to identify the 'neighbor' trees.<br>
 	   seed:  seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.<br>
     
-    	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of 
-	   species (basically shows the density of each cluster in every cell of a map) and have the following columns:
-
+    	2.2. Files named ___kde_full.rds show the results of kernel density estimation of distinct spatial cluster of species (basically shows the density of each cluster in every 		     cell of a map) and have the following columns:
    <br>
 	   census: (if there are multiple censuses) <br>
     
