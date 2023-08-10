@@ -63,11 +63,11 @@ Folders:
 	2.1. Files named ___cluster_analysis.rds show the results of clustering analysis and have the following columns:
    
 <br>
-           sp: Species code <br>  
-	   group: Cluster (estimated through the algorithm) to which the species belongs. <br>   
-	   algorithm: Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).<br>
-	   weighted: (Yes/No) Whether the edges in the network were weighted (only Yes was used).<br>
-	   number_of_groups: Total number of distinct clusters found.<br>
+           *sp*: Species code <br>  
+	   *group*: Cluster (estimated through the algorithm) to which the species belongs. <br>   
+	   *algorithm*: Name of the alogorithm to calculate modularity of the clustering network (only Louvain was used).<br>
+	   *weighted*: (Yes/No) Whether the edges in the network were weighted (only Yes was used).<br>
+	   *number_of_groups*: Total number of distinct clusters found.<br>
 	   d_cutoff (model parameter): Distance cutoff (in meters) used to identify the 'neighbor' trees.<br>
 	   seed: seed values used for randomization of the pairwise distance matrix for species. 0 indicates no changes.<br>
    
