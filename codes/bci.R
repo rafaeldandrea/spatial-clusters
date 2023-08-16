@@ -12,7 +12,7 @@ library(C50)
 library(caret)
 library(sparr) # for function bivariate.density() in KDE()
 library(pcaMethods)
-
+library(rcompanion)
 
 #Source important functions
 source('C:/Users/mihir/Documents/spatial-clusters/codes/clustering_functions_rann.R')
@@ -32,7 +32,10 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 ###############################################################################################################
 
 #Download the dryad repository https://doi.org/10.15146/5xcp-0d46
-#Unzip the folder labelled "bci.tree.zip"
+#Ref:Condit, Richard et al. (2019), Complete data from the Barro Colorado 
+#50-ha plot: 423617 trees, 35 years, Dryad, Dataset, https://doi.org/10.15146/5xcp-0d46
+
+#Unzip the folder labelled "bci.tree.zip" and place the 8 .rdata files in R working directory
 
 raw.files=list.files()[intersect(grep(".rdata",list.files()),grep("bci.tree",list.files()))]
 
@@ -54,13 +57,28 @@ bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
 
 #Load BCI plant trait data
 #Source for trait data: https://doi.org/10.6084/m9.figshare.c.3303654.v1
-#Source for leaf stoichiometry data: https://doi.org/10.25573/data.23463254
-#Convert the tab separated text files into csv files labeled as 'bci_trait_data.rds' and 'bci_st_tr.csv', respectively.
+#Ref: Joseph Wright, S.; Kitajima, Kaoru; J. B. Kraft, Nathan; Reich, 
+#Peter B.; J. Wright, Ian; Bunker, Daniel E.; et al. (2016). 
+#Functional traits and the growth–mortality trade-off in tropical trees.
+#Wiley. Collection. https://doi.org/10.6084/m9.figshare.c.3303654.v1
 
-trait_data_raw = readRDS('bci_trait_data.rds')
-trait_data_st=read.csv('bci_st_tr.csv')%>%as_tibble()
+#Move the tab separated text file called "BCI LEAF ELEMENTAL COMPOSITION with binomials.txt" in an R working directory
+
+
+#Source for leaf stoichiometry data: https://doi.org/10.25573/data.23463254
+#Ref: Wright, Joseph (2023). Foliar elemental composition and carbon and nitrogen isotope 
+#values for 339 woody species from Barro Colorado Island, Panama. 
+#Smithsonian Tropical Research Institute. Dataset. https://doi.org/10.25573/data.23463254.v1
+
+#Download a text file called "Supplement_20100505.txt" from the repo. and move it to an R working directory.
+#Open the text file, remove the metadata on the top and keep the table and save it again.
+
+
+trait_data_raw=read.table("Supplement_20100505.txt",sep="\t",header=TRUE)
+
 
 #BCI species information data
+#Download the file called "bci.spptable.rdata" from the repo https://doi.org/10.15146/5xcp-0d46 (listed above)
 load('bci.spptable.rdata')
 
 splist=bci%>%
@@ -85,15 +103,26 @@ bci.sp=bci.spptable%>%as_tibble()%>%
 
 
 
-#Data taken from a url "http://ctfs.si.edu/webatlas/datasets/bci/soilmaps/bci.block20.data.xls" 
-#and save it in your working directory as "bci.block20.data.xls"
+#Download a .xls file using a url "http://ctfs.si.edu/webatlas/datasets/bci/soilmaps/bci.block20.data.xls" 
+# and move it to R working directory
+
+#Ref:Hubbell, S.P., Condit, R., and Foster, R.B. 2005. Barro Colorado Forest Census 
+#Plot Data. URL http://ctfs.si.edu/webatlas/datasets/bci.
 
 nutrients=read_xls("bci.block20.data.xls",sheet="means (20 X 20 m)")%>%
           as_tibble()
 
 
 #Load soil water level data
-#Source:https://doi.org/10.1038/s41597-019-0072-z
+#Source:https://doi.org/10.6084/m9.figshare.c.4372898
+#Ref:Kupers, S.J., Wirth, C., Engelbrecht, B.M.J. et al. Dry season soil water potential maps of a 50 
+#hectare tropical forest plot on Barro Colorado Island, Panama. Sci Data 6, 63 (2019). 
+#https://doi.org/10.1038/s41597-019-0072-z
+
+#Download full data in a zipped folder named "Kupers_et_al", unzip it, go to the folder called "Output" and 
+#move the file called "BCI_SWP_map_mid_dry_season_regular.txt" in an R working directory
+
+
 water =
   read.table('BCI_SWP_map_mid_dry_season_regular.txt',
     header = TRUE
@@ -108,8 +137,9 @@ water =
   summarize(water = mean(swp), .groups = 'drop')%>%
   mutate(water=scale(water)[,1])
 
-nutrients=nutrients%>%inner_join(water)
+#Treat water levels as "nutrient".
 
+nutrients=nutrients%>%inner_join(water)
 
 
 
@@ -178,13 +208,6 @@ fdp_analyzed =
           bci %>%
           inner_join(baldeck_cutoff) %>%
           filter(dbh > baldeck) %>%
-          mutate(fdp = 'bci')
-      }
-      if(cutoff=='rf'){
-        dat = 
-          bci %>%
-          inner_join(rf_cutoff) %>%
-          filter(dbh > rf) %>%
           mutate(fdp = 'bci')
       }
       
@@ -297,7 +320,7 @@ saveRDS(consistent_cluster_data, "bci_clustering_analysis_consistent.rds")
 #Need the clustering results for this-
 
 #If it is not already created/loaded
-consistent_cluster_data = readRDS('bci_clustering_analysis_consistent.rds')
+consistent_cluster_data = readRDS('C:/Users/mihir/Documents/spatial-clusters/Final datasets/BCI/bci_clustering_analysis_consistent.rds')
 
 data = 
   bci %>% 
@@ -305,7 +328,7 @@ data =
   full_join(
     consistent_cluster_data %>%
       filter(seed == 0) %>%
-      select(sp, census, d_cutoff, group)
+      select(sp, census, d_cutoff, group)%>%unique()
   ) %>%drop_na()%>%
   select(census, d_cutoff, gx, gy, group)
 
@@ -400,265 +423,6 @@ cluster_data=readRDS('bci_clustering_analysis_consistent.rds')%>%
   select(census,d_cutoff,sp,group)%>%
   unique()
 
-#Baldeck cutoffs
-
-lh_cutoff=bci_dat%>%
-  group_by(sp)%>%
-  summarize(juv=quantile(dbh,0.56),
-            adult=quantile(dbh,0.88))%>%
-  ungroup()
-
-saplings=bci_dat %>%
-  inner_join(lh_cutoff) %>%
-  filter(dbh <= juv)%>%select(-c(juv,adult))
-
-juveniles=bci_dat %>%
-  inner_join(lh_cutoff) %>%
-  filter(dbh > juv,dbh<=adult)%>%select(-c(juv,adult))
-
-adults= bci_dat %>%
-  inner_join(lh_cutoff) %>%
-  filter(dbh > adult)%>%select(-c(juv,adult))
-
-
-#When do the adult trees first appear (except for the ones from census 1)
-recruits.saplings = 
-  saplings %>%
-  filter(census > 1) %>%
-  group_by(treeID) %>%
-  slice_min(census) %>%
-  ungroup %>%
-  mutate(recruit = TRUE)
-
-recruits.juv = 
-  juveniles %>%
-  filter(census > 1) %>%
-  group_by(treeID) %>%
-  slice_min(census) %>%
-  ungroup %>%
-  mutate(recruit = TRUE)
-
-recruits.adult = 
-  adults %>%
-  filter(census > 1) %>%
-  group_by(treeID) %>%
-  slice_min(census) %>%
-  ungroup %>%
-  mutate(recruit = TRUE)
-
-saps =
-  saplings %>% 
-  left_join(
-    recruits.saplings, 
-    by = c('census', 'treeID', 'sp', 'gx', 'gy', 'dbh')
-  ) %>%
-  replace_na(list(recruit = FALSE))%>%mutate(life='sapling')
-
-juvs =
-  juveniles %>% 
-  left_join(
-    recruits, 
-    by = c('census', 'treeID', 'sp', 'gx', 'gy', 'dbh')
-  ) %>%
-  replace_na(list(recruit = FALSE))%>%mutate(life='juvenile')
-
-trees =
-  adults %>% 
-  left_join(
-    recruits, 
-    by = c('census', 'treeID', 'sp', 'gx', 'gy', 'dbh')
-  ) %>%
-  replace_na(list(recruit = FALSE))%>%mutate(life='adult')
-
-combined_data =
-  bind_rows(trees,juvs,saps) %>%
-  inner_join(
-    consistent_cluster_data %>%
-      filter(seed == 0), 
-    by = c('census', 'sp')
-  )%>%unique
-
-reference =
-  combined_data %>%
-  inner_join(
-    combined_data %>%
-      select(census, d_cutoff, number_of_groups) %>%
-      unique() %>%
-      slice_max(number_of_groups, with_ties = FALSE)
-  ) %>%
-  count(group) %>%
-  mutate(reference = ((max(rank(n))+1)-(rank(n)))) %>%
-  full_join(
-    combined_data 
-    #    inner_join(
-    #        combined_data %>%
-    #         select(census, d_cutoff, number_of_groups) %>%
-    #       unique() %>%
-    #      slice_max(number_of_groups, with_ties = FALSE)
-    # )
-  ) %>%
-  select(treeID, reference)
-
-
-
-z_full = NULL
-for(the_life in sort(unique(combined_data$life))){
-
-for(thecensus in sort(unique(combined_data$census))){
-  
-  for(thed_cutoff in sort(unique(combined_data$d_cutoff))){
-    
-    z = NULL
-    
-    x =
-      combined_data %>%
-      filter(
-        life==the_life,
-        census == thecensus,
-        d_cutoff == thed_cutoff
-      ) %>%
-      inner_join(
-        reference,
-        by = 'treeID'
-      ) %>%
-      count(
-        census,
-        d_cutoff,
-        group,
-        reference
-      ) %>%
-      mutate(group = factor(group)) %>%
-      complete(group, nesting(census, d_cutoff, reference)) %>%
-      replace_na(list(n = 0)) %>%
-      arrange(desc(n))
-    
-    if(nrow(x) > 0){
-      z %<>%
-        bind_rows(
-          tibble(
-            life=the_life,
-            census = thecensus,
-            d_cutoff = thed_cutoff,
-            group = x$group[1],
-            reference = x$reference[1]
-          )
-        )
-      
-      for(i in 2:nrow(x)){
-        
-        g = x$group[i]
-        r = x$reference[i]
-        
-        if(!g %in% z$group & !r %in% z$reference){
-          z %<>%
-            bind_rows(
-              tibble(
-                life=the_life,
-                census = thecensus,
-                d_cutoff = thed_cutoff,
-                group = g,
-                reference = r
-              )
-            )
-          
-          z_full %<>%
-            bind_rows(z)
-        }
-      }
-    }
-  }
-}
-}
-
-z_full %<>%
-  unique()
-
-combined_data_consistent =
-  combined_data %>%
-  mutate(group = factor(group)) %>%
-  left_join(z_full) %>%
-  mutate(group = reference) %>%
-  select(-reference)
-
-cluster_data =
-  consistent_cluster_data %>%
-  mutate(group = factor(group)) %>%
-  inner_join(z_full) %>%
-  mutate(group = reference) %>%
-  select(-reference)
-
-
-
-rec_df = 
-  bind_rows(recruits.saplings%>%mutate(life='saplings'),
-            recruits.juv%>%mutate(life='juveniles'),
-            recruits.adult%>%mutate(life='adults')) %>%
-  mutate(
-    x = seq(10, 990, 20)[cut(gx, seq(20, 1000, 20), labels = FALSE)],
-    y = seq(10, 490, 20)[cut(gy, seq(20,  500, 20), labels = FALSE)]
-  ) %>%
-  inner_join(
-    kde_full %>%
-      select(
-        labelling_census = census, 
-        x, 
-        y, 
-        d_cutoff, 
-        soiltype
-      ) %>%
-      unique(),
-    by = c('x', 'y')
-  ) %>%
-  inner_join(
-    cluster_data %>%
-      rename(labelling_census = census)
-  )
-
-Pm_df = 
-  kde_full %>% 
-  select(x, y, d_cutoff, soiltype, census) %>% 
-  unique() %>% 
-  count(census, d_cutoff, soiltype) %>% 
-  mutate(Pm = n / (Lx * Ly / 20 ^ 2)) %>% 
-  ungroup() %>%
-  rename(labelling_census = census)
-
-res =
-  rec_df %>%
-  group_by(
-    labelling_census,
-    d_cutoff,
-    group
-  ) %>%
-  summarize(
-    recruits = n(),
-    matches = sum(group == soiltype),
-    .groups = 'drop'
-  ) %>%
-  left_join(
-    Pm_df %>%
-      rename(group = soiltype)
-  ) %>%
-  mutate(
-    theta = ((1 - Pm) / Pm) / (recruits / matches - 1)
-  )
-
-res_summary = 
-  res %>%
-  group_by(labelling_census, d_cutoff) %>%
-  mutate(weight = recruits / sum(recruits)) %>%
-  summarize(
-    theta_mean = weighted.mean(theta, weight),
-    theta_se = sqrt(sum(weight * (theta - theta_mean) ^ 2)),
-    .groups = 'drop'
-  ) %>%
-  group_by(d_cutoff) %>%
-  summarize(
-    theta_mean = mean(theta_mean),
-    theta_se = sqrt(sum(theta_se ^ 2)) / n(),
-    .groups = 'drop'
-  )
-
 
 lh_cutoff=bci_dat%>%
   group_by(sp)%>%
@@ -668,8 +432,8 @@ lh_cutoff=bci_dat%>%
 
 sap.rec=bci_dat%>%
   mutate(
-    x = seq(10, 990, 20)[cut(gx, seq(20, 1000, 20), labels = FALSE)],
-    y = seq(10, 490, 20)[cut(gy, seq(20,  500, 20), labels = FALSE)]
+    x = seq(10, 990, 20)[cut(gx, seq(0, 1000, 20), labels = FALSE,include.lowest = TRUE)],
+    y = seq(10, 490, 20)[cut(gy, seq(0,  500, 20), labels = FALSE,include.lowest = TRUE)]
   )%>%
   select(census,treeID,sp,x,y,dbh)%>%
   inner_join(lh_cutoff)%>%
@@ -683,8 +447,8 @@ sap.rec=bci_dat%>%
 
 juv.rec=bci_dat%>%
   mutate(
-    x = seq(10, 990, 20)[cut(gx, seq(20, 1000, 20), labels = FALSE)],
-    y = seq(10, 490, 20)[cut(gy, seq(20,  500, 20), labels = FALSE)]
+    x = seq(10, 990, 20)[cut(gx, seq(0, 1000, 20), labels = FALSE,include.lowest = TRUE)],
+    y = seq(10, 490, 20)[cut(gy, seq(0,  500, 20), labels = FALSE,include.lowest = TRUE)]
   )%>%
   select(census,treeID,sp,x,y,dbh)%>%
   inner_join(lh_cutoff)%>%
@@ -697,8 +461,8 @@ juv.rec=bci_dat%>%
 
 adult.rec=bci_dat%>%
   mutate(
-    x = seq(10, 990, 20)[cut(gx, seq(20, 1000, 20), labels = FALSE)],
-    y = seq(10, 490, 20)[cut(gy, seq(20,  500, 20), labels = FALSE)]
+    x = seq(10, 990, 20)[cut(gx, seq(0, 1000, 20), labels = FALSE,include.lowest = TRUE)],
+    y = seq(10, 490, 20)[cut(gy, seq(0,  500, 20), labels = FALSE,include.lowest = TRUE)]
   )%>%
   select(census,treeID,sp,x,y,dbh)%>%
   inner_join(lh_cutoff)%>%
@@ -900,6 +664,8 @@ plot_histograms =
 #4. Perform PCA and kmeans clustering to calculate covariation and spatial distribution
 # of different soil nutrients.
 ##################################################################################################################
+
+
 #load kde and clustering data if not already loaded
 
 cluster_data=readRDS("bci_clustering_analysis_consistent.rds")
@@ -1570,9 +1336,8 @@ cmpr=list(c(1,2),c(1,3),c(1,4),c(2,3),c(2,4),c(3,4))
 ggboxplot(trdat_long, x = "group", y = "conc",
           color = "group")+
   facet_wrap(~trait,scales='free')+
-  stat_compare_means(comparisons = cmpr, tip.length=0,                                                                               label = "p.signif", 
-                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1), 
-                                        symbols = c("****", "***", "**", "*", "ns")),
+  stat_compare_means(comparisons = cmpr, tip.length=0,label = "p.signif", 
+                     symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, 1),symbols = c("****", "***", "**", "*", "ns")),
                      vjusts=-0.1) +
   theme_minimal() + 
   # Add a border around each facet

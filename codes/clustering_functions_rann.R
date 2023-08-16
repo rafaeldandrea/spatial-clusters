@@ -6,11 +6,11 @@ library(furrr)  ## for parallel computing
 library(magrittr)
 library(RANN)  ## for neighbor-finding function nn2()
 library(sparr)
+library(spatstat)
 
 
 
 ## pdf of the distance d between two random points in a 
-## square of side a, from Johan Philip 2007
 euclidean2d_distance_probability = function(d, a){
   if(d > a * sqrt(2)) return(0)
   f =

@@ -39,8 +39,8 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 
 #Source doi:https://doi.org/10.15472/ekg6vs
 
-#Download the DwC file. Unzip the folder. There are two text files with tables for tree occurrence and dbh data. PLace them in a working
-#directory.
+#Download the DwC file. Unzip the folder. There are two text files with tables for tree occurrence and dbh data. 
+#Place them in a working directory.
 #Filter the occurrence data by census==2 (DatasetID=="Censo: 2"). Filter the dbh data for for only primary branches (CodTallo=="A").
 #Combine both the files and label the new file as lap_census_data.rds (newly created files is saved as .rds and .csv in the repo).
 #Note that the column names are changed from the original spanish labels. 
@@ -71,6 +71,7 @@ lap=df1%>%
 #Download the excel file labelled, "laplanada.data.deposited". 
 #Create an independent CSV file from the sheet called "Block Estimates" of the 20X20m krieged data. 
 # Standardize the gx and gy values between 1 and 25 (from the range of 0-500).
+
 #Label it as "lap_20X20_soil.csv"
 
 nutrients=read.csv("lap_20x20_soil.csv")%>%as_tibble()%>%
@@ -140,16 +141,8 @@ fdp_analyzed =
           lap %>%
           inner_join(baldeck_cutoff) %>%
           filter(dbh > baldeck)
-        
-      if(cutoff=='rf'){
-        data = 
-          lap %>%
-          inner_join(rf_cutoff) %>%
-          filter(dbh > rf) 
       }
-      
-    
-      
+        
       if(seed > 0){
         data %<>%
           mutate(sp = sample(sp))
