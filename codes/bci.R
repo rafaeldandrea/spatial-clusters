@@ -32,7 +32,7 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 ###############################################################################################################
 
 #Download the dryad repository https://doi.org/10.15146/5xcp-0d46
-#Ref:Condit, Richard et al. (2019), Complete data from the Barro Colorado 
+#Ref: Condit, Richard et al. (2019), Complete data from the Barro Colorado 
 #50-ha plot: 423617 trees, 35 years, Dryad, Dataset, https://doi.org/10.15146/5xcp-0d46
 
 #Unzip the folder labelled "bci.tree.zip" and place the 8 .rdata files in R working directory
@@ -53,7 +53,7 @@ mydat=lapply(tree.files,function(x){
 
 all=do.call("rbind", mydat)%>%tibble()
 bci_raw=all%>%mutate(census=rep(1:8,sapply(mydat, nrow)))
-bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
+bci=bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
 
 #Load BCI plant trait data
 #Source for trait data: https://doi.org/10.6084/m9.figshare.c.3303654.v1
@@ -62,7 +62,9 @@ bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
 #Functional traits and the growth–mortality trade-off in tropical trees.
 #Wiley. Collection. https://doi.org/10.6084/m9.figshare.c.3303654.v1
 
-#Move the tab separated text file called "BCI LEAF ELEMENTAL COMPOSITION with binomials.txt" in an R working directory
+#Download a text file called "Supplement_20100505.txt" from the repo. and move it to an R working directory.
+#Open the text file, remove the metadata on the top and keep the table and save it again.
+trait_data_raw=read.table("Supplement_20100505.txt",sep="\t",header=TRUE)
 
 
 #Source for leaf stoichiometry data: https://doi.org/10.25573/data.23463254
@@ -70,15 +72,16 @@ bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
 #values for 339 woody species from Barro Colorado Island, Panama. 
 #Smithsonian Tropical Research Institute. Dataset. https://doi.org/10.25573/data.23463254.v1
 
-#Download a text file called "Supplement_20100505.txt" from the repo. and move it to an R working directory.
-#Open the text file, remove the metadata on the top and keep the table and save it again.
 
+#Move the tab separated text file called "BCI LEAF ELEMENTAL COMPOSITION with binomials.txt" in an R working directory
 
-trait_data_raw=read.table("Supplement_20100505.txt",sep="\t",header=TRUE)
+trait_data_st=read.table("BCI LEAF ELEMENTAL COMPOSITION with binomials.txt",sep="\t",header=TRUE)
 
 
 #BCI species information data
 #Download the file called "bci.spptable.rdata" from the repo https://doi.org/10.15146/5xcp-0d46 (listed above)
+#If applicable, change the extension of the file from ".gz" to ".rdata"
+
 load('bci.spptable.rdata')
 
 splist=bci%>%
@@ -312,6 +315,8 @@ consistent_cluster_data = cluster_data%>%
 
 saveRDS(consistent_cluster_data, "bci_clustering_analysis_consistent.rds")
 
+write.csv(consistent_cluster_data, "bci_clustering_analysis_consistent.csv")
+
 
 
 #2. Kernel density estimation: Kernel smoothing of geographic areas of each of the inferred clusters.
@@ -320,7 +325,9 @@ saveRDS(consistent_cluster_data, "bci_clustering_analysis_consistent.rds")
 #Need the clustering results for this-
 
 #If it is not already created/loaded
-consistent_cluster_data = readRDS('C:/Users/mihir/Documents/spatial-clusters/Final datasets/BCI/bci_clustering_analysis_consistent.rds')
+
+consistent_cluster_data = read.csv('bci_clustering_analysis_consistent.csv')%>%as_tibble()
+
 
 data = 
   bci %>% 
@@ -336,9 +343,7 @@ data =
 kde_full = 
   expand_grid(
     census = unique(data$census),
-    d_cutoff = unique(data$d_cutoff),
-    Lx=Lx,
-    Ly=Ly
+    d_cutoff = unique(data$d_cutoff)
   ) %>%
   future_pmap_dfr(
     .f = KDE,
@@ -346,26 +351,21 @@ kde_full =
     .options = furrr_options(seed = NULL)
   )
 
-kde_full=kde_full%>%
-  inner_join(
-    kde_full %>%
-      group_by(census, d_cutoff, x, y) %>%
-      slice_max(density, n = 1, with_ties = FALSE) %>%
-      rename(soiltype = group) %>%
-      ungroup() %>%
-      select(-density))%>%
-      mutate(soiltype=as.factor(soiltype))
 
-saveRDS(kde_full,"bci_kde_full.RDS")
+saveRDS(kde_full,"bci_kde_full.rds")
+
+write.csv(kde_full,"bci_kde_full.csv")
 
 
 #Plot spatial clusters by census and d_cutoffs
 
-bci_clustmap_all=readRDS('bci_kde_full.rds')%>%
-  #filter(d_cutoff==20,census==7)%>%
-  group_by(d_cutoff,census,x,y)%>%
-  slice_max(density,with_ties=FALSE)%>%
+bci_clustmap_all=read.csv('bci_kde_full.csv')%>%
+  group_by(census,d_cutoff,x,y)%>%
+  slice_max(density,with_ties = FALSE)%>%
   ungroup()%>%
+  rename(soiltype=group)%>%
+  mutate(soiltype=as.factor(soiltype))%>%
+  #filter(d_cutoff==20,census==7)%>%
   ggplot(aes(x,y,fill=soiltype))+
   geom_tile()+
   #facet_wrap(~census)+
@@ -379,11 +379,16 @@ bci_clustmap_all=readRDS('bci_kde_full.rds')%>%
   #theme(legend.position="top")+
   facet_grid(census~d_cutoff)
 
-bci_clustmap_7=readRDS('bci_kde_full.rds')%>%
-  filter(d_cutoff==20,census==7)%>%
-  group_by(x,y)%>%
-  slice_max(density,with_ties=FALSE)%>%
+bci_clustmap_7=read.csv('bci_kde_full.csv')%>%
+  group_by(census,d_cutoff,x,y)%>%
+  slice_max(density,with_ties = FALSE)%>%
   ungroup()%>%
+  rename(soiltype=group)%>%
+  filter(d_cutoff==20,census==7)%>%
+  group_by(census,d_cutoff,x,y)%>%
+  slice_max(density,with_ties = FALSE)%>%
+  ungroup()%>%
+  mutate(soiltype=as.factor(soiltype))%>%
   ggplot(aes(x,y,fill=soiltype))+
   geom_tile()+
   #facet_wrap(~census)+
@@ -663,20 +668,21 @@ plot_histograms =
 
 #4. Perform PCA and kmeans clustering to calculate covariation and spatial distribution
 # of different soil nutrients.
+#Analyse 7th census
 ##################################################################################################################
-
 
 #load kde and clustering data if not already loaded
 
-cluster_data=readRDS("bci_clustering_analysis_consistent.rds")
+cluster_data=read.csv("bci_clustering_analysis_consistent.csv")%>%as_tibble()
 
-kde_full=readRDS('kde_full.rds')
+kde_full=read.csv('bci_kde_full.csv')%>%as_tibble()
 
 
 data=kde_full%>%
       filter(census==7,d_cutoff==20)%>%
       group_by(x,y)%>%
       slice_max(density)%>%
+      ungroup()%>%
       select(x,y,group)%>%
       inner_join(nutrients%>%
                    mutate(
@@ -698,11 +704,13 @@ df_scores =
   as_tibble() %>% 
   bind_cols(data)
 
+
+#Lengthy code warning! Reduce number of seeds to check code execution
 k = 
   future_pmap_dfr(
     expand_grid(
       groups = 2:10, 
-      seed = 0:50
+      seed = 0:100
     ),
     function(groups, seed){
       foo = 
@@ -743,6 +751,8 @@ plot_gap =
   ylab('Gap statistic (log)')+
   theme(aspect.ratio = 1,
         axis.title=element_text(size=15,face='bold'))
+
+#4 clusters!
 
 k4 = 
   kmeans(
@@ -801,18 +811,6 @@ cordat=kde_full%>%
        ungroup()
 
 cordat%>%
-  mutate(group=as.factor(group),
-         nutrient=as.factor(nutrient))%>%
-  ggplot(aes(nutrient,cor_sig,fill=group))+
-  geom_bar(stat='identity')+
-  facet_grid(~group)%>%
-  scale_fill_manual(values=cbpalette)+
-  theme(axis.text=element_text(size=12,face='bold'),
-        legend.title=element_text(size=12,face='bold'))+
-  xlab('Nutrients')+
-  ylab("Pearson's correlation coefficient")
-
-cordat%>%
   mutate(group=as.factor(group))%>%
   ggplot(aes(nutrient,cor_sig,fill=group))+
   geom_bar(stat='identity',position=position_dodge())+
@@ -831,41 +829,49 @@ cordat%>%
 
 #Perform C5.0 analysis to find associations between spatial clusters and soil nutrient variables
 
+cluster_data=read.csv("bci_clustering_analysis_consistent.csv")%>%as_tibble()
 
-cluster_data=readRDS("bci_clustering_analysis_consistent.rds")
+kde_full=read.csv('bci_kde_full.csv')%>%as_tibble()
 
-kde_full=readRDS('kde_full.rds')
+kde_full=kde_full%>%
+        filter(census==7,d_cutoff==20)%>%
+        group_by(x,y)%>%
+        slice_max(density)%>%
+        ungroup()%>%
+        unique()
 
-nutrients %<>%
+nutrient=nutrients %>%
   pivot_longer(-c(x, y), names_to = 'nutrient') %>% 
   group_by(nutrient) %>%
   mutate(standardized = (value - min(value)) / (max(value) - min(value))) %>%
   ungroup()
 
 dtf = 
-  nutrients %>%
+  nutrient %>%
   select(-value) %>%
   pivot_wider(names_from = nutrient, values_from = standardized)%>%
   full_join(
     kde_full%>%
-      filter(census==7,
-             d_cutoff==20)%>%
       select(x,y,group)
-  )
-
-C5_res=C5.0(dtf%>%select(-group),
-            dtf$group,
-            rule=TRUE,
-            control=C5.0Control(bands=10,winnow=TRUE),
-            trials=1)
+  )%>%
+  mutate(group=as.factor(group))
 
 
-C5_model=train(dtf%>%select(-group),dtf$group,method='C5.0',metric='Kappa',tunelength=10,trControl=cv)
+#Start the analysis
+#Vary the parameter 'mincases' to determine the minimum no. of samples per split
+#of the dataset.
+#Record the results in terms of kappa
 
-C5_model$results %>%
-  as_tibble %>%
-  bind_cols(parms[index, ]) %>%
-  return()
+C5_res=C5.0(dtf%>%select(Al:water),
+     dtf$group,
+     rule=TRUE,
+     control=C5.0Control(bands=10,winnow=TRUE,minCases=10),
+     trials=1)
+
+cv <- trainControl(method = "repeatedcv", number =10, repeats =10)
+
+
+C5_model=train(dtf%>%select(Al:water),dtf$group,method='C5.0',metric='Kappa',tunelength=10,trControl=cv)
 
 
 ###########################################################################################
@@ -873,9 +879,17 @@ C5_model$results %>%
 #Morpho/growth trait analysis
 #Perform PCAs and kmeans analysis
 
+trait_data_raw=
+  trait_data_raw%>%
+  rename(genus=GENUS.,
+         species=SPECIES.)%>%
+  as_tibble()%>%
+  inner_join(bci.sp%>%select(species,genus,sp))%>%
+  select(-c('genus','FAMILY.','species'))
+
 #KDE functions:
 KernelDensityEstimation =
-  function(gx, gy, Lx = L, Ly = 500, quadrat_length = 20, ...){
+  function(gx, gy, Lx = 1000, Ly = 500, quadrat_length = 20, ...){
     
     evalpoints =
       expand_grid(
@@ -941,9 +955,36 @@ bci_dat=bci%>%
           ungroup())%>%
         filter(dbh>baldeck)
 
-cluster_data=readRDS("bci_clustering_analysis_consistent.rds")
+cluster_data=read.csv("bci_clustering_analysis_consistent.csv")
 
 splist=unique(bci$sp)
+
+size_traits=c('HEIGHT')
+
+leaf_traits=c('LMA')
+
+seed_traits=c('SEEDMASS')
+
+wood_traits=c('WSG')
+
+vital_traits=c(
+  "RGR95SAP",
+  "RGR90SAP",
+  "RGRAVGSAP",
+  "N_RGRSAP",
+  "MRT25SAP",   
+  "MRT50SAP",
+  "MRTALLSAP",
+  "N_MRTALLSAP",
+  "RGR95TRE",
+  "RGR90TRE",
+  "RGRAVGTRE",
+  "N_RGRTRE",
+  "MRT25TRE",
+  "MRT50TRE",
+  "MRTALLTRE",
+  "N_MRTALLTRE"
+)
 
 size_traits =
   c(
@@ -1008,14 +1049,9 @@ traitlist =
 
 
 foo =
-  trait_data_raw %>%
-  mutate(sp = tolower(`SP$`)) %>%
-  pivot_longer(-c(1:6, sp), names_to = 'trait') %>%
+  trait_data_raw%>%
+  pivot_longer(-sp,names_to = 'trait') %>%
   filter(!is.na(value)) %>%
-  filter(!str_detect(trait, '_N')) %>%
-  filter(!str_detect(trait, 'N_')) %>%
-  filter(!str_detect(trait, '_SE')) %>%
-  filter(!str_detect(trait, 'SEM_')) %>%
   filter(value > 0) %>%
   mutate(logged_value = log(value))
 
@@ -1037,6 +1073,44 @@ trait_data =
   ungroup %>%
   select(sp, trait, standardized)
 
+
+
+pca_data =
+  seq(traitlist) %>%
+  map_dfr(
+    .f = function(i){
+      subdat =
+        trait_data %>%
+        filter(trait %in% traitlist[[i]]) %>%
+        select(sp, trait, standardized) %>%
+        pivot_wider(names_from = trait, values_from = standardized)
+      
+      if(ncol(subdat)>2){
+      
+      subpca =
+        subdat %>%
+        pca(method = 'ppca', scale = 'none', center = FALSE)
+      
+      res=tibble(
+        sp = subdat$sp,
+        trait_type = names(traitlist[i]),
+        pc1 = subpca@scores[, 1],
+        pc2 = subpca@scores[, 2]
+      )
+      }else{
+        
+        res=tibble(
+          sp=subdat$sp,
+          trait_type=names(traitlist[i]),
+          pc1=as.vector(unlist(subdat[,2])),
+          pc2=NA
+        )
+      }
+      
+      return(res)
+    }
+  ) 
+
 trait_data_w=trait_data%>%
   filter(sp%in%splist)%>%
   pivot_wider(names_from=trait,values_from=standardized)
@@ -1051,15 +1125,15 @@ trait_data_w=trait_data_w%>%
          PC2=pca_data2@scores[,2])
 
 
-
-trait_data_w%<>%
+trait_data_w=trait_data_w%>%
   inner_join(
     pca_data%>%
       select(sp,trait_type,pc1)%>%
       pivot_wider(names_from = trait_type,values_from=pc1))%>%
   select(sp,vital,leaf,seed,wood,size,PC1,PC2)
 
-
+#kmeans analysis to see if the clustering in species traits is associated with 
+#spatial clustering in species
 
 kmeans_dat=bci_dat%>%
   inner_join(trait_data_w)%>%
@@ -1077,6 +1151,8 @@ abuns=kmeans_dat%>%
 trdat=trait_data_w%>%
   inner_join(abuns)  
 
+
+#Lengthy code! Reduce the number of seeds to test execution
 k = 
   future_pmap_dfr(
     expand_grid(
@@ -1133,11 +1209,19 @@ k3=kmeansW(trdat%>%select(PC1,PC2),centers=3,weight = trdat$abun,nstart=100)
 
 trdat%<>%mutate(kmeans=k3$cluster)%>%mutate(kmeans=as.factor(kmeans))
 
+
+kmeans_dat%<>%
+  inner_join(
+    trdat%>%
+      select(sp,kmeans)
+  )
+
+
 PC_cluster=trdat%>%
   ggplot(aes(PC1,PC2,col=kmeans))+geom_point(aes(size=abun))+
   xlab('Trait PC1')+
   ylab('Trait PC2')+
-  scale_color_manual(values=cbpalette[c(1,2,3)])+
+  scale_color_manual(values=cbpalette[c(1,2,3,4)])+
   theme(aspect.ratio=1,
         axis.title=element_text(size=12,face='bold'),
         legend.title=element_text(size=12,face='bold'))
@@ -1155,12 +1239,6 @@ trdat%>%
   )+
   ylab('Values')
 
-
-kmeans_dat%<>%
-  inner_join(
-    trdat%>%
-      select(sp,kmeans)
-  )
 
 plot_kmeans=kmeans_dat%>%
   select(gx,gy,sp,kmeans,group,vital,leaf,seed,wood,size)%>%
@@ -1200,7 +1278,7 @@ plot_grid(plot_gap,plot.soiltypes,labels=c("(A)","(B)"),nrow=2)
 
 #Plot kmeans clusters
 
-kde_kmeans<-kmeans_dat %>%
+kde_kmeans=kmeans_dat %>%
   select(gx,gy,kmeans)%>%
   group_by(kmeans) %>% 
   summarize(
@@ -1229,6 +1307,35 @@ kde_kmeans%>%
   facet_grid(rows=vars(kmeans))+
   scale_fill_gradientn(colours = terrain.colors(10))
 
+
+kde_full=
+kde_full%>%
+  filter(census==7,d_cutoff==20)%>%
+  select(group,x,y,density)
+
+kde_full%>%
+  group_by(x,y)%>%
+  slice_max(density)%>%
+  ungroup()%>%
+  mutate(density=density/max(density))%>%
+  ggplot(aes(x,y,fill=density))+
+  geom_tile()+
+  facet_grid(rows=vars(group))+
+  scale_fill_gradientn(colours = terrain.colors(10))+
+  theme(aspect.ratio = 0.5)
+  
+kde_kmeans%>%
+  group_by(x,y)%>% #get the dominant group from each quadrant
+  slice_max(density)%>%
+  ungroup()%>%
+  mutate(density=density/max(density))%>% #Scale the values between 0 and 1
+  ggplot(aes(x,y,fill=density))+
+  geom_tile()+
+  facet_grid(rows=vars(kmeans))+
+  scale_fill_gradientn(colours = terrain.colors(10))+
+  theme(aspect.ratio = 0.5)
+
+
 trdat%>%
   select(c(sp,vital:size,kmeans))%>%
   pivot_longer(vital:size,names_to = 'trait',values_to = 'Concentration')%>%
@@ -1240,6 +1347,7 @@ trdat%>%
   pivot_longer(vital:size,names_to = 'trait',values_to = 'Concentration')%>%
   ggplot(aes(kmeans,Concentration))+geom_boxplot()+facet_wrap(~trait,scales='free')
 
+#Create a discripancy table between spatial clusters and trait clusters across quadrats
 
 c_table=kmeans_dat%>%
   select(group,kmeans)%>%

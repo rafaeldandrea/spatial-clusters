@@ -559,7 +559,7 @@ KDE =
       group_by(group) %>% 
       summarize(
         density = 
-          KernelDensityEstimation(gx = gx, gy = gy, Lx = 1000),
+          KernelDensityEstimation(gx = gx, gy = gy, Lx = 1000, Ly=500),
         .groups = 'drop'
       )
     

@@ -6,9 +6,6 @@ library(furrr)
 library(parallel)
 
 
-do.data = 1
-do.plots = 0
-
 Lx=1000
 Ly=500
 
@@ -65,29 +62,30 @@ source('clustering_functions_rann.R')
     }
   
   
-  parameters=expand.grid(seed=1:10,nsoiltypes=c(2,4,5,10,15))
+  parameters=expand.grid(seeds=1:10,nsoiltype=c(2,4,5,10,15))
   
-  #Create a folder to save the landscape files
-  setwd( "C:/Users/Mihir/Documents/landscapes")
+
+  #Create a folder to save the landscape files e.g. for windows computers:
+  setwd( "C:/Users/XXX/Documents/landscapes")
   
   parameters%>%
     future_pmap_dfr(
-      .f=function(seed,nsoiltypes){
+      .f=function(seeds,nsoiltypes){
         
         land=generate_landscape(
           Lx,
           Ly,
-          quadrat_length,
-          rangepar,
-          sillpar,
-          nuggetpar,
-          nsoiltypes,
-          seed
+          quadrat_length=20,
+          rangepar=20,
+          sillpar=1,
+          nuggetpar=0.001,
+          num_soiltypes=nsoiltypes,
+          seed=seeds
         )%>%
           mutate(seed=seed,
                  nsoiltypes=nsoiltypes)
         
-        write.csv(land,paste0("landscape_",seed,"_",nsoiltypes,".csv"))
+        write.csv(land,paste0("landscape_",seeds,"_",nsoiltypes,".csv"))
       }
     )
   
@@ -168,7 +166,29 @@ source('clustering_functions_rann.R')
   
   ## average intercensus mortality and births are each 
   ## typically ~= 10% of the number of living trees
-  bci_all = readRDS('bci_raw.rds')
+  #Download the dryad repository https://doi.org/10.15146/5xcp-0d46
+  #Ref:Condit, Richard et al. (2019), Complete data from the Barro Colorado 
+  #50-ha plot: 423617 trees, 35 years, Dryad, Dataset, https://doi.org/10.15146/5xcp-0d46
+  
+  #Unzip the folder labelled "bci.tree.zip" and place the 8 .rdata files in R working directory
+  
+  raw.files=list.files()[intersect(grep(".rdata",list.files()),grep("bci.tree",list.files()))]
+  
+  #Load .rdata files
+  for(i in raw.files){
+    load(i)
+  }
+  
+  tree.files=ls()[grep("bci.tree",ls())]
+  
+  mydat=lapply(tree.files,function(x){
+    get(x)
+  })
+  
+  
+  all=do.call("rbind", mydat)%>%tibble()
+  bci_raw=all%>%mutate(census=rep(1:8,sapply(mydat, nrow)))
+  bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
   
   censuses = 
     expand_grid(
@@ -248,7 +268,7 @@ source('clustering_functions_rann.R')
   
   all <- do.call("rbind", mydat)%>%tibble()
   bci<-all%>%mutate(census=rep(1:8,sapply(mydat, nrow)))
-  bci<-bci%>%select(sp,gx,gy,dbh,census)%>%drop_na()
+  bci_raw<-bci%>%select(sp,gx,gy,dbh,census)%>%drop_na()
   
   
   abuns = 
@@ -272,9 +292,9 @@ source('clustering_functions_rann.R')
     expand_grid(
       average_community_size = average_community_size,
       nspecies = number_of_species,
-      nsoiltypes = c(2, 3, 4, 5, 6, 10, 15),
+      nsoiltypes = c(2,4,10,15),
       ncensuses = 100,
-      d_cutoff = c(10, 20), 
+      d_cutoff = 20, 
       d_step = 1e-5,
       Lx = 1000,
       Ly = 500,
@@ -284,29 +304,12 @@ source('clustering_functions_rann.R')
       nuggetpar = .001, 
       seed = 0, 
       theta = c(1, 2, 5, 10, 1e5),
-      clustering_algorithm = c('louvain', 'walktrap'),
+      clustering_algorithm = 'louvain',
       autolinked_species_only = TRUE,
-      weighted = c(FALSE, TRUE),
+      weighted = TRUE,
       self_loops = FALSE
     )
   
-  if(!seawulf){
-    parameters %<>%
-      filter(
-        nsoiltypes %in% c(1, 10, 15)
-      )
-  }
-
-    parameters %<>% 
-      filter(
-        clustering_algorithm == 'louvain', 
-        d_cutoff == 20, 
-        rangepar == 20, 
-        quadrat_length == 20, 
-        weighted == TRUE,
-        self_loops == FALSE
-      )
-
   
   simulation = 
     function(
@@ -666,7 +669,7 @@ source('clustering_functions_rann.R')
   )
   
   result = 
-    readRDS('~/SpatialNiche/Data/20210720/simulation_analysis.rds')
+    readRDS('simulation_analysis.rds')
   
   plot_ngroups = 
     result %>%
@@ -693,4 +696,4 @@ source('clustering_functions_rann.R')
   
   gridExtra::grid.arrange(plot_ngroups, plot_modularity, nrow = 1 )
   
-}
+
