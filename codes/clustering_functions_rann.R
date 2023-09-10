@@ -227,13 +227,10 @@ adjacency_matrix =
     ## within a circle of radius d*
     abundance_threshold = round(sqrt(1 / cumulative_null_prob_threshold))
   
-    
     abuns = 
       dat %>%
       count(sp) %>%
       arrange(desc(n))
-    
-    abundance_threshold = round(sqrt(1 / cumulative_null_prob_threshold))
     
     dat_filtered = 
       dat %>%

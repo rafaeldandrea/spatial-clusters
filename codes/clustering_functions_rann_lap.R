@@ -234,8 +234,6 @@ adjacency_matrix =
       count(sp) %>%
       arrange(desc(n))
     
-    abundance_threshold = round(sqrt(1 / cumulative_null_prob_threshold))
-    
     dat_filtered = 
       dat %>%
       inner_join(abuns, by = 'sp') %>%

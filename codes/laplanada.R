@@ -1,3 +1,40 @@
+## DO NOT SKIP THIS!
+
+## Instructions for downloading required datasets
+
+###############################################################################################################
+# Download census data
+###############################################################################################################
+
+#Source doi:https://doi.org/10.15472/ekg6vs
+
+#Download the DwC file. Unzip the folder. There are two text files with tables for tree occurrence and dbh data. 
+#Place them in a working directory.
+#Filter the occurrence data by census==2 (DatasetID=="Censo: 2"). Filter the dbh data for for only primary branches (CodTallo=="A").
+#Combine both the files and label the new file as lap_census_data.rds (newly created files is saved as .rds and .csv in the repo).
+#Note that the column names are changed from the original spanish labels. 
+
+
+###############################################################################################################
+# Download soil nutrient data
+###############################################################################################################
+
+#Source:https://doi.org/10.13012/B2IDB-6140727_V1 
+#Download the excel file labelled, "laplanada.data.deposited". 
+#Create an independent CSV file from the sheet labelled "Block Estimates" of the 20X20m krieged data. 
+
+#Label it as "lap_20X20_soil.csv"
+
+###############################################################################################################
+# Download custom functions
+###############################################################################################################
+
+# Navigate to https://github.com/rafaeldandrea/spatial-clusters/blob/main/codes/clustering_functions_rann_lap.R
+
+# Download the raw file to the working directory.
+###############################################################################################################
+
+## Required libraries
 library(tidyverse)
 library(openxlsx)
 library(magrittr)
@@ -37,14 +74,6 @@ cbpalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00",
 ###############################################################################################################
 #Load census data
 
-#Source doi:https://doi.org/10.15472/ekg6vs
-
-#Download the DwC file. Unzip the folder. There are two text files with tables for tree occurrence and dbh data. 
-#Place them in a working directory.
-#Filter the occurrence data by census==2 (DatasetID=="Censo: 2"). Filter the dbh data for for only primary branches (CodTallo=="A").
-#Combine both the files and label the new file as lap_census_data.rds (newly created files is saved as .rds and .csv in the repo).
-#Note that the column names are changed from the original spanish labels. 
-
 df=read.table('occurrence.txt',sep='\t',header=TRUE)
 
 df1=df%>%select(id,recordNumber,"verbatimLatitude","verbatimLongitude","scientificNameID")
@@ -63,18 +92,20 @@ lap=df1%>%
     "gx"=verbatimLongitude,
     "gy"=verbatimLatitude,
     "sp"=scientificNameID,
-    "dbh"=DAP)%>%as_tibble()
+    "dbh"=DAP)%>%
+    mutate(dbh=as.numeric(dbh),
+           sp=tolower(sp))%>%
+    as_tibble()
 
 
 #Soil nutrient data
-#Source:https://doi.org/10.13012/B2IDB-6140727_V1 
-#Download the excel file labelled, "laplanada.data.deposited". 
-#Create an independent CSV file from the sheet called "Block Estimates" of the 20X20m krieged data. 
-# Standardize the gx and gy values between 1 and 25 (from the range of 0-500).
 
-#Label it as "lap_20X20_soil.csv"
 
 nutrients=read.csv("lap_20x20_soil.csv")%>%as_tibble()%>%
+          mutate(gx=gx+10,
+                 gy=gy+10)%>%
+          rename(x=gx,
+                 y=gy)%>%
           mutate(
           across(
             Al:pH, 
@@ -101,7 +132,7 @@ Ly=500
 #Baldeck cutoffs
 baldeck_cutoff = 
  lap %>%
-  group_by(sp) %>%
+  group_by(sp)%>%
   summarize(
     baldeck = quantile(dbh, .56), 
     .groups ='drop'
@@ -119,6 +150,10 @@ parameters=
     seed=0:100
   )
 
+
+###WARNING! Lengthy code! Each parameter combination requires 2-3 minutes. There
+# are 300 total parameter combinations! Reduce the no. of combinations above (no.of seeds)
+#if you just want to test the code.
 
 fdp_analyzed = 
   parameters %>%
@@ -161,10 +196,8 @@ fdp_analyzed =
         ) %>%
         pluck('result') %>%
         mutate(
-          census = thecensus,
           d_cutoff = d_cutoff,
           seed = seed,
-          method=method,
           cutoff=cutoff
         )%>%
         return()
@@ -175,6 +208,7 @@ fdp_analyzed =
 
 saveRDS(fdp_analyzed, file = "lap_clustering_analysis.rds")
 
+write.csv(fdp_analyzed, file = "lap_clustering_analysis.csv")
 
 ##################################################################################################################
 #2. Kernel density estimation: Kernel smoothing of geographic areas of each of the inferred clusters.
@@ -183,7 +217,9 @@ saveRDS(fdp_analyzed, file = "lap_clustering_analysis.rds")
 #Need the clustering results for this-
 
 #If it is not already created/loaded
-cluster_data = readRDS('lap_clustering_analysis.rds')
+cluster_data = read.csv('lap_clustering_analysis.csv')%>%
+                mutate(sp=tolower(sp))%>%
+                as_tibble()
 
 data = 
   lap %>% 
@@ -191,13 +227,18 @@ data =
   full_join(
       cluster_data %>%
       filter(seed == 0) %>%
-      select(sp, d_cutoff, group)
-  ) %>%drop_na()%>%
-  select( d_cutoff, gx, gy, group)
+      select(sp, d_cutoff, group),
+      relationship = "many-to-many")%>%
+  drop_na()%>%
+  select( d_cutoff, gx, gy, group)%>%
+  mutate(census=1)
 
+
+#Ignore the warnings from the KDE function
 
 kde_full = 
-  expand_grid(census=1,
+  expand_grid(
+    census=unique(data$census),
     d_cutoff = unique(data$d_cutoff)
   ) %>%
   future_pmap_dfr(
@@ -206,46 +247,39 @@ kde_full =
     .options = furrr_options(seed = NULL)
   )
 
-kde_full=kde_full%>%
-  inner_join(
-    kde_full %>%
-      group_by(d_cutoff, x, y) %>%
-      slice_max(density, n = 1, with_ties = FALSE) %>%
-      rename(soiltype = group) %>%
-      ungroup() %>%
-      select(-density))%>%
-  mutate(soiltype=as.factor(soiltype))
 
-saveRDS(kde_full,"lap_kde_full.RDS")
+saveRDS(kde_full,"lap_kde_full.rds")
+
+write.csv(kde_full,"lap_kde_full.csv")
 
 
 #Plot spatial clusters by census and d_cutoffs
 
-lap_clustmap_all=readRDS('lap_kde_full.rds')%>%
+
+lap_clustmap_all=read.csv('lap_kde_full.csv')%>%
   group_by(d_cutoff,census,x,y)%>%
   slice_max(density,with_ties=FALSE)%>%
   ungroup()%>%
+  mutate(soiltype=as.factor(soiltype))%>%
   ggplot(aes(x,y,fill=soiltype))+
   geom_tile()+
-  #facet_wrap(~census)+
-  theme(aspect.ratio = 0.5,
+  theme(aspect.ratio = 1,
         strip.text = element_text(size =15,face='bold'),
         legend.title= element_text(size = 10,face="bold"),
         axis.title= element_text(size = 15,face="bold")
   )+
   labs(fill='Species cluster')+
   scale_fill_manual(values=cbpalette[c(1,2,3,4,5)])+
-  #theme(legend.position="top")+
   facet_grid(~d_cutoff)
 
-lap_clustmap=readRDS('lap_kde_full.rds')%>%
+lap_clustmap=read.csv('lap_kde_full.csv')%>%
   filter(d_cutoff==20)%>%
   group_by(x,y)%>%
   slice_max(density,with_ties=FALSE)%>%
   ungroup()%>%
+  mutate(soiltype=as.factor(soiltype))%>%
   ggplot(aes(x,y,fill=soiltype))+
   geom_tile()+
-  #facet_wrap(~census)+
   theme(aspect.ratio = 0.5)+
   labs(fill='Species cluster')+
   scale_fill_manual(values=cbpalette[c(1,2,3,4,5)])+
@@ -260,9 +294,9 @@ lap_clustmap=readRDS('lap_kde_full.rds')%>%
 # of different soil nutrients.
 #load kde and clustering data if not already loaded
 
-cluster_data=readRDS("lap_clustering_analysis.rds")
+cluster_data=read.csv("lap_clustering_analysis.csv")%>%as_tibble()
 
-kde_full=readRDS('lap_kde_full.rds')
+kde_full=read.csv('lap_kde_full.csv')%>%as_tibble()
 
 
 data=kde_full%>%
@@ -277,13 +311,15 @@ set.seed(0)
 
 pca = 
   nutrients %>% 
-  select(Al:H) %>% 
+  select(Al:pH) %>% 
   pcaMethods::pca(nPcs = 3, scale = 'uv', center = TRUE)
 
 df_scores = 
   pca@scores %>% 
   as_tibble() %>% 
   bind_cols(data)
+
+#K-means clustering 
 
 k = 
   future_pmap_dfr(
@@ -294,7 +330,7 @@ k =
     function(groups, seed){
       foo = 
         df_scores %>%
-        select(Al:pH)
+        select(PC1:PC3)
       if(seed > 0){
         set.seed(seed)
         foo = apply(foo, 2, sample)
@@ -306,10 +342,10 @@ k =
           nstart = 100
         )$tot.withinss
       return(tibble(groups = groups, seed = seed, wss = wss))
-    } 
+    },
+    .options=furrr_options(seed=NULL) 
   )
 
-k%<>%mutate(wss=-log(wss))
 
 plot_gap = 
   k %>%
@@ -327,21 +363,23 @@ plot_gap =
   geom_line() + 
   geom_point() +
   xlab('number of groups') +
-  ylab('Gap statistic (log)')+
+  ylab('Gap statistic')+
   theme(aspect.ratio = 1,
         axis.title=element_text(size=15,face='bold'))
 
-k4 = 
+#3 clusters!
+
+k3 = 
   kmeans(
     df_scores %>% 
-      select(Al:pH),
-    centers = 4,
+      select(PC1:PC3),
+    centers = 3,
     nstart = 100
   )
 
 df_scores = 
   df_scores %>%
-  mutate(kmeans = k4$cluster)
+  mutate(kmeans = k3$cluster)
 
 
 lap_soilclus=df_scores%>%
@@ -349,7 +387,6 @@ lap_soilclus=df_scores%>%
   ggplot(aes(x,y,fill=kmeans))+
   geom_tile()+
   labs(fill=gsub('\\s','\n',"Soil-Nutrient Cluster"))+
-  #scale_fill_brewer(palette='YlGnBu')+
   scale_fill_manual(values=cbpalette[1:4])+
   theme(aspect.ratio = 0.5,
         legend.key.size = unit(0.4, 'cm'),
@@ -373,10 +410,12 @@ lap_cor.kmeans=df_scores%>%
 cordat=kde_full%>%
   filter(d_cutoff==20)%>%
   inner_join(nutrients%>%
-               pivot_longer(cols=Al:water,names_to='nutrient',values_to='value')%>%
+               pivot_longer(cols=Al:pH,names_to='nutrient',values_to='value')%>%
                group_by(nutrient)%>%
                mutate(values=(value - min(value)) / (max(value) - min(value)))%>%
-               ungroup())%>%
+               ungroup(),
+             relationship =
+               "many-to-many")%>%
   group_by(group,nutrient)%>%
   summarize(
     cor = cor(density, values, use = 'complete.obs'),
@@ -386,18 +425,6 @@ cordat=kde_full%>%
     cor_sig = ifelse(significant == TRUE, cor, NA)
   )%>%
   ungroup()
-
-cordat%>%
-  mutate(group=as.factor(group),
-         nutrient=as.factor(nutrient))%>%
-  ggplot(aes(nutrient,cor_sig,fill=group))+
-  geom_bar(stat='identity')+
-  facet_grid(~group)%>%
-  scale_fill_manual(values=cbpalette)+
-  theme(axis.text=element_text(size=12,face='bold'),
-        legend.title=element_text(size=12,face='bold'))+
-  xlab('Nutrients')+
-  ylab("Pearson's correlation coefficient")
 
 cordat%>%
   mutate(group=as.factor(group))%>%
@@ -417,18 +444,18 @@ cordat%>%
 #Perform C5.0 analysis to find associations between spatial clusters and soil nutrient variables
 
 
-cluster_data=readRDS("lap_clustering_analysis.rds")
+cluster_data=read.csv("lap_clustering_analysis.csv")%>%as_tibble()
 
-kde_full=readRDS('lap_kde_full.rds')
+kde_full=read.csv('lap_kde_full.csv')%>%as_tibble()
 
-nutrients %<>%
+nutrients1=nutrients %>%
   pivot_longer(-c(x, y), names_to = 'nutrient') %>% 
   group_by(nutrient) %>%
   mutate(standardized = (value - min(value)) / (max(value) - min(value))) %>%
   ungroup()
 
 dtf = 
-  nutrients %>%
+  nutrients1 %>%
   select(-value) %>%
   pivot_wider(names_from = nutrient, values_from = standardized)%>%
   full_join(
@@ -437,16 +464,19 @@ dtf =
       select(x,y,group)
   )
 
-C5_res=C5.0(dtf%>%select(-group),
+#Start the analysis
+#Vary the parameter 'mincases' to determine the minimum no. of samples per split
+#of the dataset.
+#Record the results in terms of kappa
+
+C5_res=C5.0(dtf%>%select(Al:pH),
             dtf$group,
             rule=TRUE,
-            control=C5.0Control(bands=10,winnow=TRUE),
+            control=C5.0Control(bands=10,winnow=TRUE,minCases=10),
             trials=1)
 
+cv <- trainControl(method = "repeatedcv", number =10, repeats =10)
 
-C5_model=train(dtf%>%select(-group),dtf$group,method='C5.0',metric='Kappa',tunelength=10,trControl=cv)
 
-C5_model$results %>%
-  as_tibble %>%
-  bind_cols(parms[index, ]) %>%
-  return()
+C5_model=train(dtf%>%select(Al:water),dtf$group,method='C5.0',metric='Kappa',tunelength=10,trControl=cv)
+
