@@ -105,6 +105,7 @@ caret (6.0-94)<br>
 sparr(2.3-10)<br>
 spatstat(3.0_6) <br>
 rcompanion(2.4_30)<br>
+ggpubr(0.6.0)<br>
 
 pcaMethods(1.92.0)
 Use the following code to install:
