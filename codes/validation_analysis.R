@@ -1,3 +1,33 @@
+###DO NOT SKIP
+#This is a very lengthy code intended to test the validity of our methods.
+
+
+# This code creates a set of simulated datasets of communties (~ 85000 trees of ~320 species 
+#with their geographic coordinates alongwith the landscape with varying distributed soil niches or "soil types)
+
+#As a result, there will be large no. of files created and will need to be stored in a dedicated
+#folder inside your R working directory. 
+#So, create a folder called "landscapes" within your working directory
+
+
+## Instructions for downloading required datasets
+
+###############################################################################################################
+# Download census data
+###############################################################################################################
+
+# Download the dryad repository https://doi.org/10.15146/5xcp-0d46
+
+# Unzip the folder labelled "bci.tree.zip" and
+
+# 1. move the eight .rdata files to the working directory
+# 2. move file called "bci.spptable.rdata" to the working directory. If applicable, change the extension of the file from ".gz" to ".rdata"
+
+# Ref: Condit, Richard et al. (2019), Complete data from the Barro Colorado
+# 50-ha plot: 423617 trees, 35 years, Dryad, Dataset, https://doi.org/10.15146/5xcp-0d46
+
+#############################################################################################################################
+
 
 library(tidyverse)
 library(magrittr)
@@ -6,11 +36,32 @@ library(furrr)
 library(parallel)
 
 
-Lx=1000
-Ly=500
-
 
 source('clustering_functions_rann.R')
+
+#Load BCI data
+
+Lx=1000
+Ly=500
+raw.files = list.files()[intersect(grep(".rdata", list.files()), grep("bci.tree", list.files()))]
+for (i in raw.files) {
+  load(i)
+}
+
+tree.files = ls()[grep("bci.tree", ls())]
+
+mydat = lapply(tree.files, function(x) get(x))
+
+all = do.call("rbind", mydat) %>% tibble()
+bci_raw = all %>% mutate(census = rep(1:8, sapply(mydat, nrow)))
+bci = bci_raw %>% select(sp, gx, gy, dbh, census) %>% drop_na() %>% unique()
+
+load('bci.spptable.rdata')
+
+## average intercensus mortality and births are each 
+## typically ~= 10% of the number of living trees
+
+#######################################################################################
   
   generate_landscape =
     function(
@@ -62,11 +113,16 @@ source('clustering_functions_rann.R')
     }
   
   
-  parameters=expand.grid(seeds=1:10,nsoiltype=c(2,4,5,10,15))
+  parameters=expand.grid(seeds=1:50,
+                         nsoiltype=c(2,4,5,10,15))
   
 
   #Create a folder to save the landscape files e.g. for windows computers:
-  setwd( "C:/Users/XXX/Documents/landscapes")
+  dir=getwd()
+  setwd( paste0(dir,"/landscapes"))
+  
+  
+  #Create landscape files
   
   parameters%>%
     future_pmap_dfr(
@@ -164,36 +220,18 @@ source('clustering_functions_rann.R')
         return()
     }
   
-  ## average intercensus mortality and births are each 
-  ## typically ~= 10% of the number of living trees
-  #Download the dryad repository https://doi.org/10.15146/5xcp-0d46
-  #Ref:Condit, Richard et al. (2019), Complete data from the Barro Colorado 
-  #50-ha plot: 423617 trees, 35 years, Dryad, Dataset, https://doi.org/10.15146/5xcp-0d46
   
-  #Unzip the folder labelled "bci.tree.zip" and place the 8 .rdata files in R working directory
-  
-  raw.files=list.files()[intersect(grep(".rdata",list.files()),grep("bci.tree",list.files()))]
-  
-  #Load .rdata files
-  for(i in raw.files){
-    load(i)
-  }
-  
-  tree.files=ls()[grep("bci.tree",ls())]
-  
-  mydat=lapply(tree.files,function(x){
-    get(x)
-  })
-  
-  
-  all=do.call("rbind", mydat)%>%tibble()
-  bci_raw=all%>%mutate(census=rep(1:8,sapply(mydat, nrow)))
-  bci<-bci_raw%>%select(sp,gx,gy,dbh,census)%>%drop_na()
+  baldeck_cutoff =
+    bci %>%
+    group_by(sp) %>%
+    summarize(baldeck = quantile(dbh, .56),
+              .groups = 'drop')
+ 
   
   censuses = 
     expand_grid(
-      census1 = 1:7,
-      census2 = 1:7
+      census1 = 1:8,
+      census2 = 1:8
     ) %>%
     filter(census2 == census1 + 1)
   
@@ -202,15 +240,16 @@ source('clustering_functions_rann.R')
     pmap_dbl(
       .f = function(census1, census2){
         a = 
-          bci_all %>% 
+          bci_raw %>% 
+          inner_join(baldeck_cutoff)%>%
           filter(
             census == census1, 
             status == 'A',
-            dbh >= 100
+            dbh >= baldeck
           )
         
         d = 
-          bci_all %>% 
+          bci_raw %>% 
           filter(
             census == census2, 
             status == 'D'
@@ -226,19 +265,21 @@ source('clustering_functions_rann.R')
     pmap_dbl(
       .f = function(census1, census2){
         a1 = 
-          bci_all %>% 
+          bci_raw %>% 
+          inner_join(baldeck_cutoff)%>%
           filter(
             census == census1, 
             status == 'A',
-            dbh < 100
+            dbh < baldeck
           )
         
         a2 = 
-          bci_all %>% 
+          bci_raw %>% 
+          inner_join(baldeck_cutoff)%>%
           filter(
             census == census2, 
             status == 'A',
-            dbh >= 100
+            dbh >= baldeck
           )
         
         length(intersect(a1$treeID, a2$treeID)) %>%
@@ -257,19 +298,6 @@ source('clustering_functions_rann.R')
   setwd(paste0(dir,"/","bci_dryad"))
   
   raw.files<-list.files()
-  
-  #Load data from DRYAD datasets: Census 7
-  mydat<- lapply(raw.files, function(x) {
-    load(file = x)
-    get(ls()[ls()!= "filename"])
-  })
-  
-  setwd(dir)
-  
-  all <- do.call("rbind", mydat)%>%tibble()
-  bci<-all%>%mutate(census=rep(1:8,sapply(mydat, nrow)))
-  bci_raw<-bci%>%select(sp,gx,gy,dbh,census)%>%drop_na()
-  
   
   abuns = 
     bci %>%

@@ -50,6 +50,7 @@ library(caret)
 library(sparr) # for function bivariate.density() in KDE()
 library(pcaMethods)
 library(rcompanion)
+library(ggpubr)
 
 filter = dplyr::filter
 
@@ -98,7 +99,7 @@ lap=df1%>%
     as_tibble()
 
 
-#Soil nutrient data
+# Read Soil nutrient data
 
 
 nutrients=read.csv("lap_20x20_soil.csv")%>%as_tibble()%>%
@@ -116,16 +117,14 @@ nutrients=read.csv("lap_20x20_soil.csv")%>%as_tibble()%>%
 ###################################################################################################################
 #1. Spatial clustering analysis:
 
-# Step 1:For each census, count the number of heterospecific trees in the neighborhood of each tree,
+# Step 1: Count the number of heterospecific trees in the neighborhood of each tree,
 # where the neighborhood is a circle of radius = 10m, 20m and 30m. 
 # Step 2: Build an adjacency matrix where each entry (Aij)  in a matrix is the number of neighbors
 # of species i which belong to species j (significance is determined by the relative no. of conspecific neighbors)
 # Step 3: Calculate maximum modularity of the matrix and determine the strength of clustering
 # as well as no. of clusters. 
-#Caution- lengthy execution time! One iteration of parameter combination takes ~5-6 minutes.
 
-Lx=500
-Ly=500
+
 
 #Cutoffs to determine the adult individuals of each species
 
@@ -213,7 +212,6 @@ write.csv(fdp_analyzed, file = "lap_clustering_analysis.csv")
 ##################################################################################################################
 #2. Kernel density estimation: Kernel smoothing of geographic areas of each of the inferred clusters.
 
-
 #Need the clustering results for this-
 
 #If it is not already created/loaded
@@ -292,8 +290,9 @@ lap_clustmap=read.csv('lap_kde_full.csv')%>%
 
 #Perform PCA and kmeans clustering to calculate covariation and spatial distribution
 # of different soil nutrients.
-#load kde and clustering data if not already loaded
 
+
+#load kde and clustering data if not already loaded
 cluster_data=read.csv("lap_clustering_analysis.csv")%>%as_tibble()
 
 kde_full=read.csv('lap_kde_full.csv')%>%as_tibble()
@@ -321,11 +320,41 @@ df_scores =
 
 #K-means clustering 
 
+#Warning: Lengthy code 
+k =
+  expand_grid(
+    groups = 2:10,
+    seed = 0:10
+  ) %>%
+  future_pmap_dfr(
+    .f = 
+      function(.data, groups, seed) {
+        foo = .data
+        if (seed > 0) {
+          set.seed(seed)
+          foo = apply(foo, 2, sample)
+        }
+        wss = sum(kmeansW(foo, centers = groups, nstart = 100)$withinss)
+        return(
+          tibble(
+            groups = groups,
+            seed = seed,
+            wss = wss,
+            lwss = log(wss)
+          )
+        )
+      },
+    .data = df_scores %>% select(PC1:PC3),
+    .options = furrr_options(seed = NULL)
+  )
+
+
+
 k = 
   future_pmap_dfr(
     expand_grid(
       groups = 2:10, 
-      seed = 0:50
+      seed = 0:100
     ),
     function(groups, seed){
       foo = 
@@ -335,37 +364,56 @@ k =
         set.seed(seed)
         foo = apply(foo, 2, sample)
       }
-      wss = 
-        kmeans(
+      wss = sum(
+        kmeansW(
           foo, 
           centers = groups, 
           nstart = 100
-        )$tot.withinss
+        )$withinss)
       return(tibble(groups = groups, seed = seed, wss = wss))
     },
     .options=furrr_options(seed=NULL) 
   )
 
+k%<>%mutate(lwss=log(wss))
 
-plot_gap = 
+gap =
   k %>%
-  filter(seed == 0) %>% 
+  filter(seed == 0) %>%
   inner_join(
-    k %>% 
-      filter(seed > 0) %>% 
-      group_by(groups) %>% 
+    k %>%
+      filter(seed > 0) %>%
+      group_by(groups) %>%
       summarize(
-        null = mean(wss), 
-        .groups = 'drop')
-  ) %>% 
-  mutate(gap = null - wss) %>%
+        sd = sd(lwss),
+        null = mean(lwss),
+        .groups = 'drop'
+      ),
+    by = 'groups'
+  ) %>%
+  mutate(gap = null - lwss)
+
+plot_gap =
+  gap %>%
   ggplot(aes(groups, gap)) +
-  geom_line() + 
+  geom_line() +
   geom_point() +
   xlab('number of groups') +
-  ylab('Gap statistic')+
-  theme(aspect.ratio = 1,
-        axis.title=element_text(size=15,face='bold'))
+  ylab('Gap statistic (log)') +
+  theme(
+    aspect.ratio = 1,
+    axis.title = element_text(size = 15, face = 'bold')
+  )
+
+gap_tib = 
+  gap |>
+  mutate(
+    gap_diff = c(NA, diff(gap)) - c(NA, sd[-1]),
+    test = gap_diff < 0
+  )
+
+number_of_clusters = with(gap_tib, which(test == TRUE)[1])
+
 
 #3 clusters!
 
@@ -388,9 +436,9 @@ lap_soilclus=df_scores%>%
   geom_tile()+
   labs(fill=gsub('\\s','\n',"Soil-Nutrient Cluster"))+
   scale_fill_manual(values=cbpalette[1:4])+
-  theme(aspect.ratio = 0.5,
-        legend.key.size = unit(0.4, 'cm'),
-        legend.title=element_text(size=8))
+  theme(aspect.ratio = 1,
+        legend.key.size = unit(0.7, 'cm'),
+        legend.title=element_text(size=10))
 
 
 lap_cor.kmeans=df_scores%>%
@@ -426,6 +474,7 @@ cordat=kde_full%>%
   )%>%
   ungroup()
 
+#Ignore the warning message with this code. 
 cordat%>%
   mutate(group=as.factor(group))%>%
   ggplot(aes(nutrient,cor_sig,fill=group))+
