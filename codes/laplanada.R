@@ -349,34 +349,6 @@ k =
   )
 
 
-
-k = 
-  future_pmap_dfr(
-    expand_grid(
-      groups = 2:10, 
-      seed = 0:100
-    ),
-    function(groups, seed){
-      foo = 
-        df_scores %>%
-        select(PC1:PC3)
-      if(seed > 0){
-        set.seed(seed)
-        foo = apply(foo, 2, sample)
-      }
-      wss = sum(
-        kmeansW(
-          foo, 
-          centers = groups, 
-          nstart = 100
-        )$withinss)
-      return(tibble(groups = groups, seed = seed, wss = wss))
-    },
-    .options=furrr_options(seed=NULL) 
-  )
-
-k%<>%mutate(lwss=log(wss))
-
 gap =
   k %>%
   filter(seed == 0) %>%
